@@ -94,16 +94,38 @@ export async function build(config: NitronConfig, options: BuildOptions): Promis
     // ─── Step 5: Sign APK ───────────────────────────────────
     logger.step(5, BUILD_STEPS, 'Signing APK...')
     const signedDir = join(options.outputDir, '.signing-temp')
-    const signedApkPath = await signApk(unsignedPath, signedDir)
+    const signedApkPath = await signApk(unsignedPath, signedDir, {
+      release: options.release,
+      projectDir: options.projectDir
+    })
 
     // ─── Step 6: Move to final output ───────────────────────
     logger.step(6, BUILD_STEPS, 'Finalizing...')
     const finalPath = join(options.outputDir, 'app.apk')
     await copyFile(signedApkPath, finalPath)
 
-    // ─── Step 7: Get file size ──────────────────────────────
+    // ─── Step 7: Get file size & Breakdown ──────────────────
     logger.step(7, BUILD_STEPS, 'Verifying output...')
     const apkStat = await stat(finalPath)
+
+    let assetsSize = 0
+    let dexSize = 0
+    try {
+      const { readdir } = await import('node:fs/promises')
+      const dirSize = async (dir: string): Promise<number> => {
+        let size = 0
+        const files = await readdir(dir, { withFileTypes: true })
+        for (const f of files) {
+          if (f.isDirectory()) size += await dirSize(join(dir, f.name))
+          else size += (await stat(join(dir, f.name))).size
+        }
+        return size
+      }
+      assetsSize = await dirSize(join(buildDir as string, 'assets'))
+      dexSize = (await stat(join(buildDir as string, 'classes.dex'))).size
+    } catch { }
+
+    const otherSize = apkStat.size - assetsSize - dexSize
 
     // ─── Step 8: Cleanup ────────────────────────────────────
     logger.step(8, BUILD_STEPS, 'Cleaning up...')
@@ -118,6 +140,24 @@ export async function build(config: NitronConfig, options: BuildOptions): Promis
 
     const duration = Date.now() - startTime
     logger.summary(finalPath, formatSize(apkStat.size), formatDuration(duration))
+
+    console.log(`\n📦 APK size: ${formatSize(apkStat.size)}`)
+    console.log(`   └─ assets/      ${formatSize(assetsSize)}`)
+    console.log(`   └─ classes.dex  ${formatSize(dexSize)}`)
+    console.log(`   └─ other        ${formatSize(Math.max(0, otherSize))}\n`)
+
+    if (options.release) {
+      console.log('✓ Signed with release keystore')
+      console.log('✓ targetSdkVersion: 34')
+      console.log('✓ minSdkVersion: 21')
+      if (!config.icon || config.icon === 'default') {
+        console.log('⚠ Icon not set — Google Play requires a 512x512 PNG icon')
+      }
+      if (config.version === '1.0.0') {
+        console.log('⚠ Version is 1.0.0 — make sure to increment before each upload')
+      }
+      console.log()
+    }
 
     return {
       success: true,

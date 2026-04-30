@@ -13,7 +13,8 @@ import { join } from 'node:path'
 import { homedir } from 'node:os'
 import { promisify } from 'node:util'
 import { fileURLToPath } from 'node:url'
-import { dirname } from 'node:path'
+import { dirname, basename } from 'node:path'
+import prompts from 'prompts'
 
 const execFileAsync = promisify(execFile)
 
@@ -32,7 +33,7 @@ function getSignerJarPath(): string {
 /**
  * Check if Java is available on the system.
  */
-async function findJava(): Promise<string> {
+export async function findJava(): Promise<string> {
   // Check JAVA_HOME first
   const javaHomeRaw = process.env.JAVA_HOME
   if (javaHomeRaw) {
@@ -62,13 +63,42 @@ async function findJava(): Promise<string> {
 }
 
 /**
+ * Check if Keytool is available on the system.
+ */
+export async function findKeytool(): Promise<string> {
+  const javaHomeRaw = process.env.JAVA_HOME
+  if (javaHomeRaw) {
+    const javaHome = javaHomeRaw.trim()
+    const ext = process.platform === 'win32' ? '.exe' : ''
+    const keytoolBin = join(javaHome, 'bin', `keytool${ext}`)
+    try {
+      await execFileAsync(keytoolBin, ['-help'])
+      return keytoolBin
+    } catch (err) {
+      // Fall through
+    }
+  }
+
+  try {
+    await execFileAsync('keytool', ['-help'])
+    return 'keytool'
+  } catch {
+    throw new Error(
+      'Keytool not found — Nitron needs the Java JDK (not just JRE) to generate a keystore.\n' +
+      '  Install the full JDK from: https://adoptium.net/\n' +
+      '  Or set JAVA_HOME to your JDK installation.'
+    )
+  }
+}
+
+/**
  * Sign an APK file using uber-apk-signer.
  *
  * @param unsignedApkPath - Path to the unsigned APK
  * @param outputDir - Directory where the signed APK will be placed
  * @returns Path to the signed APK file
  */
-export async function signApk(unsignedApkPath: string, outputDir: string): Promise<string> {
+export async function signApk(unsignedApkPath: string, outputDir: string, options?: { release?: boolean, projectDir?: string }): Promise<string> {
   const java = await findJava()
   const signerJar = getSignerJarPath()
 
@@ -84,14 +114,45 @@ export async function signApk(unsignedApkPath: string, outputDir: string): Promi
 
   await mkdir(outputDir, { recursive: true })
 
+  const args = [
+    '-jar',
+    signerJar,
+    '--apks', unsignedApkPath,
+    '--out', outputDir,
+    '--allowResign',
+  ]
+
+  if (options?.release && options.projectDir) {
+    const keystorePath = join(options.projectDir, 'nitron-release.keystore')
+    try {
+      await access(keystorePath)
+    } catch {
+      throw new Error(
+        'Release keystore not found!\n' +
+        'Run "npx nitron keystore" to generate a release keystore before building with --release.'
+      )
+    }
+
+    const { password } = await prompts({
+      type: 'password',
+      name: 'password',
+      message: 'Enter release keystore password'
+    })
+
+    if (!password) {
+      throw new Error('Password is required for release signing.')
+    }
+
+    args.push(
+      '--ks', keystorePath,
+      '--ksAlias', 'release',
+      '--ksPass', password,
+      '--ksKeyPass', password
+    )
+  }
+
   try {
-    const { stdout, stderr } = await execFileAsync(java, [
-      '-jar',
-      signerJar,
-      '--apks', unsignedApkPath,
-      '--out', outputDir,
-      '--allowResign',
-    ], {
+    const { stdout, stderr } = await execFileAsync(java, args, {
       timeout: 60000, // 60 second timeout
     })
 

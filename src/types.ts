@@ -33,6 +33,8 @@ export interface BuildOptions {
   outputDir: string
   /** Enable verbose debug logging */
   debug: boolean
+  /** Build in release mode using nitron-release.keystore */
+  release?: boolean
 }
 
 /**

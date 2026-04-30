@@ -24,8 +24,9 @@ program
   .command('build')
   .description('Build APK or PWA from the current project')
   .option('--debug', 'Enable verbose debug output', false)
+  .option('--release', 'Sign APK with release keystore for Google Play', false)
   .option('-t, --target <target>', 'Target output: android, pwa, or all', 'android')
-  .action(async (options: { debug: boolean, target: string }) => {
+  .action(async (options: { debug: boolean, target: string, release: boolean }) => {
     const projectDir = process.cwd()
 
     logger.banner()
@@ -106,6 +107,7 @@ program
         projectDir,
         outputDir: resolve(projectDir, 'dist'),
         debug: options.debug,
+        release: options.release
       })
 
       if (!result.success) {
@@ -117,6 +119,15 @@ program
         process.exit(1)
       }
     }
+  })
+
+// ─── KEYSTORE COMMAND (Phase 5) ──────────────────────────────────
+program
+  .command('keystore')
+  .description('Generate a release keystore for signing your production APK')
+  .action(async () => {
+    const { generateKeystore } = await import('./keystore.js')
+    await generateKeystore(process.cwd())
   })
 
 // ─── INIT COMMAND (Phase 3) ──────────────────────────────────────
