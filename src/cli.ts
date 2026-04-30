@@ -22,9 +22,10 @@ program
 // ─── BUILD COMMAND ───────────────────────────────────────────────
 program
   .command('build')
-  .description('Build APK from the current project')
+  .description('Build APK or PWA from the current project')
   .option('--debug', 'Enable verbose debug output', false)
-  .action(async (options: { debug: boolean }) => {
+  .option('-t, --target <target>', 'Target output: android, pwa, or all', 'android')
+  .action(async (options: { debug: boolean, target: string }) => {
     const projectDir = process.cwd()
 
     logger.banner()
@@ -84,20 +85,37 @@ program
       logger.blank()
     }
 
-    // Run the build pipeline
-    const result = await build(config, {
-      projectDir,
-      outputDir: resolve(projectDir, 'dist'),
-      debug: options.debug,
-    })
-
-    if (!result.success) {
-      for (const e of result.errors) {
-        logger.error(e)
+    const target = options.target.toLowerCase()
+    
+    if (target === 'pwa' || target === 'all') {
+      logger.info('Building PWA target...')
+      const { buildPwa } = await import('./pwa.js')
+      try {
+        const { outDir, filesCount } = await buildPwa(process.cwd(), config)
+        logger.success(`PWA built successfully → ${outDir} (${filesCount} files)`)
+      } catch (err: any) {
+        logger.error(`PWA build failed: ${err.message}`)
+        process.exit(1)
       }
       logger.blank()
-      logger.error('Build failed.')
-      process.exit(1)
+    }
+
+    if (target === 'android' || target === 'all') {
+      logger.info('Building Android target...')
+      const result = await build(config, {
+        projectDir,
+        outputDir: resolve(projectDir, 'dist'),
+        debug: options.debug,
+      })
+
+      if (!result.success) {
+        for (const e of result.errors) {
+          logger.error(e)
+        }
+        logger.blank()
+        logger.error('Android build failed.')
+        process.exit(1)
+      }
     }
   })
 
