@@ -141,7 +141,23 @@ No `android/` folder. No `platforms/`. No `gradle.properties`. Just your web fil
 | Phase 2 | ✅ Complete | APK Build Pipeline (unpack → inject → sign) |
 | Phase 3 | ✅ Complete | Developer Experience Polish (`init` and `dev`) |
 | Phase 4 | ✅ Complete | Multi-Target Output (APK + PWA) |
-| Phase 5 | ⬚ Future | Publishing Helpers, release signing |
+| Phase 5 | ✅ Complete | Publishing Helpers, release signing |
+
+---
+
+## Production Release
+
+When you are ready to publish your Android app to Google Play, you need a release keystore.
+
+1. Generate a keystore (only do this once!):
+   ```bash
+   npx nitron keystore
+   ```
+2. Build for release:
+   ```bash
+   npx nitron build --release
+   ```
+   You will be prompted for your keystore password, and Nitron will generate a release-signed APK along with a Google Play checklist.
 
 ---
 
