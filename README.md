@@ -108,7 +108,7 @@ The entire process takes seconds, uses ~200MB of RAM, and never shows you a sing
 | Needs Java / JDK | ⚠️ JRE only(minimal) | ✅ Always | ✅ Always | — |
 | npm-only workflow | ✅ Yes | ❌ No | ❌ No | ✅ Yes |
 | Real APK output | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No |
-| Google Play ready | ⚠️ آNeed Tests | ✅ Yes | ✅ Yes | ❌ No |
+| Google Play ready | ⚠️ Need Tests | ✅ Yes | ✅ Yes | ❌ No |
 | Build time | Seconds | Minutes | Minutes | — |
 | RAM during build | ~200MB | 4–16GB | 4–8GB | — |
 | Setup time | ~60 seconds | 30–60 minutes | 30–60 minutes | Fast |
