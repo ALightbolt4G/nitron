@@ -1,7 +1,7 @@
 {
   "name": "nitron",
-  "version": "0.1.0",
-  "description": "Convert HTML/CSS/JS into Android APK — zero Android knowledge required",
+  "version": "1.0.0",
+  "description": "HTML/CSS/JS to Android APK builder",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
@@ -48,14 +48,14 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
+    "browser-sync": "^3.0.4",
     "commander": "^13.1.0",
     "jszip": "^3.10.1",
-    "live-server": "^1.2.2",
     "picocolors": "^1.1.1",
     "prompts": "^2.4.2"
   },
   "devDependencies": {
-    "@types/live-server": "^1.2.3",
+    "@types/browser-sync": "^2.29.1",
     "@types/node": "^22.0.0",
     "@types/prompts": "^2.4.9",
     "tsup": "^8.4.0",
