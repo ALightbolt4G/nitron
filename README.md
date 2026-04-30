@@ -140,8 +140,26 @@ No `android/` folder. No `platforms/`. No `gradle.properties`. Just your web fil
 | Phase 1 | ✅ Complete | CLI scaffold, config reader, validator |
 | Phase 2 | ✅ Complete | APK Build Pipeline (unpack → inject → sign) |
 | Phase 3 | ✅ Complete | Developer Experience Polish (`init` and `dev`) |
-| Phase 4 | ⬚ Future | Multi-Target Output (APK + PWA) |
+| Phase 4 | ✅ Complete | Multi-Target Output (APK + PWA) |
 | Phase 5 | ⬚ Future | Publishing Helpers, release signing |
+
+---
+
+## Multi-Target Output (PWA)
+
+Nitron can build both an Android APK and a Progressive Web App (PWA) from the exact same configuration.
+
+```bash
+npx nitron build --target android  # Default: Generates dist/app.apk
+npx nitron build --target pwa      # Generates dist/pwa/
+npx nitron build --target all      # Generates both
+```
+
+When building for `--target pwa`, Nitron automatically:
+- Copies your assets to `dist/pwa/`
+- Generates a fully compliant `manifest.json` based on `app.js`
+- Generates a `service-worker.js` that caches all your assets for offline use
+- Injects the necessary tags into your `index.html`
 
 ---
 
