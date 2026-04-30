@@ -38,7 +38,7 @@ npm run build   # to generate APK
 
 **Output:** `dist/app.apk` — a real Android APK, ready to install on any device or upload to Google Play.
 
-No Android Studio. No Gradle. No JDK. No SDK. Just npm.
+No Android Studio. No Gradle. No SDK. Just npm and a Java runtime.
 
 ---
 
