@@ -4,6 +4,8 @@ dist/
 
 # Test app
 test-app/
+my-final-test/
+real-zero-test/
 
 # OS files
 .DS_Store
