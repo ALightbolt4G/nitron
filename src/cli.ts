@@ -107,7 +107,8 @@ program
   .description('Create a new Nitron project')
   .action(async (name?: string) => {
     logger.banner()
-    logger.warn('Init command not yet implemented — coming in Phase 3')
+    const { initProject } = await import('./init.js')
+    await initProject(name)
   })
 
 // ─── DEV COMMAND (Phase 3) ───────────────────────────────────────
@@ -116,7 +117,8 @@ program
   .description('Start local preview server with hot reload')
   .action(async () => {
     logger.banner()
-    logger.warn('Dev server not yet implemented — coming in Phase 3')
+    const { startDevServer } = await import('./dev.js')
+    await startDevServer(process.cwd())
   })
 
 // ─── Parse and run ──────────────────────────────────────────────

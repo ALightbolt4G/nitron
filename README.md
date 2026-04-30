@@ -30,9 +30,10 @@ You write HTML, CSS, and JavaScript. You run an npm command. You get a real `.ap
 ## Quick Start
 
 ```bash
-npm create nitron@latest my-app
+npx nitron init my-app
 cd my-app
-npm run build
+npm run dev     # to preview locally
+npm run build   # to generate APK
 ```
 
 **Output:** `dist/app.apk` — a real Android APK, ready to install on any device or upload to Google Play.
@@ -138,7 +139,7 @@ No `android/` folder. No `platforms/`. No `gradle.properties`. Just your web fil
 |---|---|---|
 | Phase 1 | ✅ Complete | CLI scaffold, config reader, validator |
 | Phase 2 | ✅ Complete | APK Build Pipeline (unpack → inject → sign) |
-| Phase 3 | 🚧 In Progress | Developer Experience Polish (`init` and `dev`) |
+| Phase 3 | ✅ Complete | Developer Experience Polish (`init` and `dev`) |
 | Phase 4 | ⬚ Future | Multi-Target Output (APK + PWA) |
 | Phase 5 | ⬚ Future | Publishing Helpers, release signing |
 
