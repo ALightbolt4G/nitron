@@ -105,7 +105,7 @@ The entire process takes seconds, uses ~200MB of RAM, and never shows you a sing
 |---|---|---|---|---|
 | Needs Android Studio | ❌ Never | ✅ Always | ✅ Always | — |
 | Needs Gradle | ❌ Never | ✅ Always | ✅ Always | — |
-| Needs Java / JDK | ⚠️ JRE only* | ✅ Always | ✅ Always | — |
+| Needs Java / JDK | ⚠️ JRE only(minimal) | ✅ Always | ✅ Always | — |
 | npm-only workflow | ✅ Yes | ❌ No | ❌ No | ✅ Yes |
 | Real APK output | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No |
 | Google Play ready | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No |
@@ -114,6 +114,7 @@ The entire process takes seconds, uses ~200MB of RAM, and never shows you a sing
 | Setup time | ~60 seconds | 30–60 minutes | 30–60 minutes | Fast |
 | Error messages | Web-friendly | Android stacktraces | Android stacktraces | — |
 
+JRE 8+ required for APK signing. No JDK, no Android SDK, no Gradle.
 ---
 
 ## Project Structure
