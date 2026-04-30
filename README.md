@@ -105,7 +105,7 @@ The entire process takes seconds, uses ~200MB of RAM, and never shows you a sing
 |---|---|---|---|---|
 | Needs Android Studio | ❌ Never | ✅ Always | ✅ Always | — |
 | Needs Gradle | ❌ Never | ✅ Always | ✅ Always | — |
-| Needs Java / JDK | ❌ Never | ✅ Always | ✅ Always | — |
+| Needs Java / JDK | ⚠️ JRE only* | ✅ Always | ✅ Always | — |
 | npm-only workflow | ✅ Yes | ❌ No | ❌ No | ✅ Yes |
 | Real APK output | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No |
 | Google Play ready | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No |
