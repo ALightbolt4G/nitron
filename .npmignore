@@ -1,0 +1,6 @@
+test-app/
+scripts/
+*.bat
+tsup.config.ts
+tsconfig.json
+src/
