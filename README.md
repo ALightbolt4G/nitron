@@ -94,6 +94,8 @@ npm run build
 
 The entire process takes seconds, uses ~200MB of RAM, and never shows you a single Android error message.
 
+> **Technical Note:** Nitron uses a custom, pure JavaScript AXML binary encoder. This means it generates the binary `AndroidManifest.xml` natively in Node.js, completely eliminating the need for bulky Android dependencies like `apktool` or `aapt2`.
+
 ---
 
 ## Comparison
@@ -135,10 +137,10 @@ No `android/` folder. No `platforms/`. No `gradle.properties`. Just your web fil
 | Phase | Status | Description |
 |---|---|---|
 | Phase 1 | ✅ Complete | CLI scaffold, config reader, validator |
-| Phase 2 | 🚧 In Progress | APK build pipeline (unpack → inject → sign) |
-| Phase 3 | ⬚ Planned | `npm create nitron`, dev server, hot reload |
-| Phase 4 | ⬚ Future | Multi-target output (APK + PWA) |
-| Phase 5 | ⬚ Future | Publishing helpers, release signing |
+| Phase 2 | ✅ Complete | APK Build Pipeline (unpack → inject → sign) |
+| Phase 3 | 🚧 In Progress | Developer Experience Polish (`init` and `dev`) |
+| Phase 4 | ⬚ Future | Multi-Target Output (APK + PWA) |
+| Phase 5 | ⬚ Future | Publishing Helpers, release signing |
 
 ---
 

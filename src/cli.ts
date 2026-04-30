@@ -1,16 +1,16 @@
 // cli.ts — CLI entry point for Nitron
 //
 // Commands:
-//   nitron build   — Build APK from current project (Phase 1: config + validate only)
+//   nitron build   — Build APK from current project
 //   nitron init    — Scaffold a new project (Phase 3)
 //   nitron dev     — Start local preview server (Phase 3)
 
 import { Command } from 'commander'
+import { resolve } from 'node:path'
 import { readConfig } from './config.js'
 import { validateConfig, validateProject } from './validator.js'
+import { build } from './builder.js'
 import { logger } from './logger.js'
-
-const PHASE_1_STEPS = 4
 
 const program = new Command()
 
@@ -30,7 +30,7 @@ program
     logger.banner()
 
     // Step 1: Read config
-    logger.step(1, PHASE_1_STEPS, 'Reading configuration...')
+    logger.step(1, 2, 'Reading configuration...')
 
     let config
     try {
@@ -43,7 +43,7 @@ program
     logger.success('Configuration loaded')
 
     // Step 2: Validate config
-    logger.step(2, PHASE_1_STEPS, 'Validating project...')
+    logger.step(2, 2, 'Validating project...')
 
     const configResult = validateConfig(config)
     const projectResult = await validateProject(projectDir, config)
@@ -65,10 +65,9 @@ program
     }
 
     logger.success('Project valid')
-
-    // Step 3: Display parsed config
-    logger.step(3, PHASE_1_STEPS, 'Resolved configuration:')
     logger.blank()
+
+    // Display resolved config
     logger.config('App Name', config.name)
     logger.config('Package ID', config.packageId)
     logger.config('Version', config.version)
@@ -79,14 +78,26 @@ program
     logger.config('Icon', config.icon ?? 'default')
     logger.blank()
 
-    // Step 4: Build pipeline placeholder (Phase 2 will implement this)
-    logger.step(4, PHASE_1_STEPS, 'Building APK...')
-    logger.warn('Build pipeline not yet implemented — coming in Phase 2')
-
     if (options.debug) {
-      logger.blank()
       logger.info('Debug: Full config object:')
       console.log(JSON.stringify(config, null, 2))
+      logger.blank()
+    }
+
+    // Run the build pipeline
+    const result = await build(config, {
+      projectDir,
+      outputDir: resolve(projectDir, 'dist'),
+      debug: options.debug,
+    })
+
+    if (!result.success) {
+      for (const e of result.errors) {
+        logger.error(e)
+      }
+      logger.blank()
+      logger.error('Build failed.')
+      process.exit(1)
     }
   })
 

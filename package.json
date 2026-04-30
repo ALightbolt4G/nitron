@@ -23,11 +23,13 @@
   },
   "files": [
     "dist",
-    "template"
+    "template",
+    "vendor"
   ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
+    "prepare-template": "node scripts/prepare-template.js",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -47,11 +49,12 @@
   },
   "dependencies": {
     "commander": "^13.1.0",
+    "jszip": "^3.10.1",
     "picocolors": "^1.1.1"
   },
   "devDependencies": {
+    "@types/node": "^22.0.0",
     "tsup": "^8.4.0",
-    "typescript": "^5.7.0",
-    "@types/node": "^22.0.0"
+    "typescript": "^5.7.0"
   }
 }
