@@ -38,6 +38,8 @@ const ATTR_RESOURCE_IDS: [string, number][] = [
   ['configChanges', 0x0101001f],
   ['versionCode', 0x0101021b],
   ['versionName', 0x0101021c],
+  ['minSdkVersion', 0x0101020c],
+  ['targetSdkVersion', 0x01010270],
   ['hardwareAccelerated', 0x010102d3],
   ['usesCleartextTraffic', 0x010104ec],
 ]
@@ -98,6 +100,7 @@ class AxmlBuilder {
 
     // Element names
     this.addString('manifest')
+    this.addString('uses-sdk')
     this.addString('uses-permission')
     this.addString('application')
     this.addString('activity')
@@ -259,6 +262,13 @@ class AxmlBuilder {
       this.attr(-1, this.getIdx('platformBuildVersionCode'), '34', TYPE_STRING),
       this.attr(-1, this.getIdx('platformBuildVersionName'), '14', TYPE_STRING),
     ]))
+
+    // <uses-sdk>
+    chunks.push(this.writeStartElement(-1, this.getIdx('uses-sdk'), [
+      this.attr(nsUriIdx, this.getIdx('minSdkVersion'), 21, TYPE_INT_DEC),
+      this.attr(nsUriIdx, this.getIdx('targetSdkVersion'), 34, TYPE_INT_DEC),
+    ]))
+    chunks.push(this.writeEndElement(-1, this.getIdx('uses-sdk')))
 
     // <uses-permission> elements
     for (const perm of config.permissions) {
