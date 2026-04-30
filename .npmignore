@@ -4,3 +4,5 @@ scripts/
 tsup.config.ts
 tsconfig.json
 src/
+my-final-test/
+real-zero-test/
