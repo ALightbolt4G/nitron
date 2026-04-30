@@ -66,7 +66,7 @@ export async function buildPwa(projectDir: string, config: NitronConfig): Promis
     theme_color: '#0070f3',
     icons: [
       {
-        src: config.icon === 'default' ? 'icon.png' : config.icon,
+        src: config.icon === 'default' || !config.icon ? 'icon.png' : config.icon,
         sizes: '192x192 512x512',
         type: 'image/png',
         purpose: 'any maskable'
