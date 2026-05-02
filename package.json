@@ -2,6 +2,14 @@
   "name": "nitron",
   "version": "1.2.0",
   "description": "HTML/CSS/JS to Android APK builder",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ALightbolt4G/nitron.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ALightbolt4G/nitron/issues"
+  },
+  "homepage": "https://github.com/ALightbolt4G/nitron#readme",
   "type": "module",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
