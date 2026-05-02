@@ -13,6 +13,17 @@
 
 ---
 
+## What's New in v1.2.0
+- ✅ Linux and Mac support
+- ✅ Custom dev server port (\`--port\`)
+- ✅ Improved permissions validation
+- ✅ Multi-page navigation support
+- ✅ Tested with React and Vue
+- ✅ Android compatibility table
+- ✅ Dependency updates and security improvements
+
+---
+
 ## The Problem
 
 Every tool that turns web apps into Android apps eventually forces you to open Android Studio, install Gradle, configure a JDK, and think like an Android developer.
@@ -99,21 +110,46 @@ The entire process takes seconds, uses ~200MB of RAM, and never shows you a sing
 
 ---
 
+## Framework Compatibility
+
+Nitron seamlessly bundles the output of any web framework. Build your app using your favorite tool, and point Nitron to the output directory (e.g. `dist/` or `build/`).
+
+- **React / Vite**: 100% compatible. Ensure you use relative paths in your build config (`base: './'`).
+- **Vue**: 100% compatible.
+- **Vanilla JS**: 100% compatible.
+
+---
+
+## Supported Android Versions
+
+| Android Version | API Level | Supported |
+|---|---|---|
+| Android 5.0 (Lollipop) | 21 | ✅ Min supported |
+| Android 9.0 (Pie) | 28 | ✅ |
+| Android 11 | 30 | ✅ |
+| Android 13 | 33 | ✅ |
+| Android 14 | 34 | ✅ Target SDK |
+| Android 16 | 36 | ✅ Tested |
+
+---
+
 ## Comparison
 
 | Feature | Nitron | Capacitor | Cordova | PWA |
 |---|---|---|---|---|
 | Needs Android Studio | ❌ Never | ✅ Always | ✅ Always | — |
 | Needs Gradle | ❌ Never | ✅ Always | ✅ Always | — |
-| Needs Java / JDK | ❌ Never | ✅ Always | ✅ Always | — |
+| Needs Java / JDK | ⚠️ JRE only(minimal) | ✅ Always | ✅ Always | — |
 | npm-only workflow | ✅ Yes | ❌ No | ❌ No | ✅ Yes |
 | Real APK output | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No |
-| Google Play ready | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No |
+| Google Play ready | ⚠️ Need Tests | ✅ Yes | ✅ Yes | ❌ No |
 | Build time | Seconds | Minutes | Minutes | — |
 | RAM during build | ~200MB | 4–16GB | 4–8GB | — |
 | Setup time | ~60 seconds | 30–60 minutes | 30–60 minutes | Fast |
 | Error messages | Web-friendly | Android stacktraces | Android stacktraces | — |
+| iOS Support | ❌ No | ✅ Yes | ✅ Yes | ⚠️ Partial |
 
+JRE 8+ required for APK signing. No JDK, no Android SDK, no Gradle.
 ---
 
 ## Project Structure

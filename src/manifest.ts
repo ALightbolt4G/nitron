@@ -13,6 +13,23 @@ const ORIENTATION_MAP: Record<string, number> = {
   auto: -1,
 }
 
+const KNOWN_PERMISSIONS = new Set([
+  'INTERNET',
+  'CAMERA',
+  'ACCESS_FINE_LOCATION',
+  'ACCESS_COARSE_LOCATION',
+  'READ_EXTERNAL_STORAGE',
+  'WRITE_EXTERNAL_STORAGE',
+  'RECORD_AUDIO',
+  'VIBRATE',
+  'ACCESS_NETWORK_STATE',
+  'BLUETOOTH',
+  'BLUETOOTH_ADMIN',
+  'WAKE_LOCK',
+  'READ_CONTACTS',
+  'RECEIVE_BOOT_COMPLETED'
+])
+
 /**
  * Generate a binary AndroidManifest.xml buffer from the NitronConfig.
  *
@@ -23,7 +40,13 @@ export function generateManifest(config: NitronConfig): Buffer {
   const orientation = ORIENTATION_MAP[config.orientation] ?? -1
 
   // Always include INTERNET permission (needed for WebView)
-  const permissions = [...new Set([...config.permissions, 'INTERNET'])]
+  const permissions = [...new Set([...config.permissions.map(p => p.toUpperCase()), 'INTERNET'])]
+
+  for (const perm of permissions) {
+    if (!KNOWN_PERMISSIONS.has(perm)) {
+      console.warn(`\n⚠ WARNING: Unknown permission "${perm}". This might cause build or runtime issues on Android.`)
+    }
+  }
 
   // The activity class name — fixed to the template's WebView activity
   const activityName = 'com.nicron.webview.MainActivity'

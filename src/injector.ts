@@ -4,7 +4,7 @@
 // developer's project into the unpacked APK's assets/ folder.
 // Excluded: app.js, package.json, node_modules/, dist/, .git/
 
-import { readdir, stat, copyFile, mkdir } from 'node:fs/promises'
+import { readdir, stat, copyFile, mkdir, readFile, writeFile } from 'node:fs/promises'
 import { join, relative } from 'node:path'
 
 /** Files and directories to exclude from injection */
@@ -44,7 +44,29 @@ export async function injectAssets(projectDir: string, assetsDir: string): Promi
         await mkdir(destPath, { recursive: true })
         await copyRecursive(srcPath, destPath)
       } else if (entry.isFile()) {
-        await copyFile(srcPath, destPath)
+        if (entry.name.endsWith('.html')) {
+          // Multi-page navigation support for WebView
+          let html = await readFile(srcPath, 'utf-8')
+          const navScript = `
+<script>
+  // Nitron Multi-Page Support
+  document.addEventListener('click', (e) => {
+    const a = e.target.closest('a');
+    if (a && a.href && (a.origin === window.location.origin || !a.href.startsWith('http'))) {
+      e.preventDefault();
+      window.location.href = a.href;
+    }
+  });
+</script>`
+          if (html.includes('</head>')) {
+            html = html.replace('</head>', navScript + '\n</head>')
+          } else {
+            html += navScript
+          }
+          await writeFile(destPath, html)
+        } else {
+          await copyFile(srcPath, destPath)
+        }
         count++
       }
     }

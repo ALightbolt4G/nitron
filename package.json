@@ -48,16 +48,20 @@
     "node": ">=18.0.0"
   },
   "dependencies": {
-    "browser-sync": "^3.0.4",
+    "chokidar": "^5.0.0",
     "commander": "^13.1.0",
     "jszip": "^3.10.1",
+    "open": "^11.0.0",
     "picocolors": "^1.1.1",
-    "prompts": "^2.4.2"
+    "prompts": "^2.4.2",
+    "serve-handler": "^6.1.7",
+    "ws": "^8.20.0"
   },
   "devDependencies": {
-    "@types/browser-sync": "^2.29.1",
     "@types/node": "^22.0.0",
     "@types/prompts": "^2.4.9",
+    "@types/serve-handler": "^6.1.4",
+    "@types/ws": "^8.18.1",
     "tsup": "^8.4.0",
     "typescript": "^5.7.0"
   }
