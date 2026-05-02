@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nitron - HTML/CSS/JS to Android APK</title>
+    <style>
+        :root {
+            --bg-dark: #0a0a0f;
+            --bg-card: #14141e;
+            --bg-card-hover: #1c1c28;
+            --text-main: #f0f0f5;
+            --text-muted: #9494a0;
+            --accent-cyan: #00e5ff;
+            --accent-blue: #0070f3;
+            --border-color: rgba(255, 255, 255, 0.1);
+            --gradient-accent: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+            --font-main: system-ui, -apple-system, sans-serif;
+            --font-mono: 'Fira Code', Consolas, Monaco, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            line-height: 1.6;
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        /* Animations */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+        
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Typography */
+        h1, h2, h3 {
+            font-weight: 800;
+            line-height: 1.2;
+        }
+
+        .text-gradient {
+            background: var(--gradient-accent);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-block;
+            padding: 0.8rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+            font-size: 1rem;
+        }
+
+        .btn-primary {
+            background: var(--gradient-accent);
+            color: #000;
+            box-shadow: 0 4px 15px rgba(0, 229, 255, 0.3);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 229, 255, 0.4);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-2px);
+        }
+
+        /* Layout */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        section {
+            padding: 6rem 0;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding-top: 4rem;
+            position: relative;
+        }
+
+        .hero-bg {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(circle at center, rgba(0, 229, 255, 0.1) 0%, transparent 50%);
+            z-index: -1;
+        }
+
+        .hero h1 {
+            font-size: clamp(3rem, 5vw, 5rem);
+            margin-bottom: 1.5rem;
+            letter-spacing: -1px;
+        }
+
+        .hero p {
+            font-size: clamp(1.2rem, 2vw, 1.5rem);
+            color: var(--text-muted);
+            margin-bottom: 3rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 4rem;
+        }
+
+        /* Terminal Window */
+        .terminal {
+            background: #000;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: left;
+            overflow: hidden;
+            font-family: var(--font-mono);
+        }
+
+        .terminal-header {
+            background: var(--bg-card);
+            padding: 10px 15px;
+            display: flex;
+            gap: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .terminal-dot {
+            width: 12px; height: 12px;
+            border-radius: 50%;
+        }
+        .dot-r { background: #ff5f56; }
+        .dot-y { background: #ffbd2e; }
+        .dot-g { background: #27c93f; }
+
+        .terminal-body {
+            padding: 1.5rem;
+            color: var(--text-main);
+            font-size: 0.95rem;
+            line-height: 1.5;
+            min-height: 200px;
+        }
+
+        .typing-line { display: none; }
+        .typing-line.active { display: block; }
+        
+        .cursor {
+            display: inline-block;
+            width: 8px;
+            height: 1.2em;
+            background: var(--text-main);
+            vertical-align: middle;
+            animation: blink 1s step-end infinite;
+        }
+
+        @keyframes blink { 50% { opacity: 0; } }
+
+        .text-cyan { color: var(--accent-cyan); }
+        .text-green { color: #27c93f; }
+        .text-muted { color: var(--text-muted); }
+
+        /* Problem Section */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .card {
+            background: var(--bg-card);
+            padding: 2.5rem;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            transition: transform 0.3s, background 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            background: var(--bg-card-hover);
+        }
+
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1.5rem;
+            display: inline-block;
+        }
+
+        .card h3 {
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        /* How it works */
+        .pipeline-container {
+            max-width: 800px;
+            margin: 4rem auto;
+            position: relative;
+        }
+
+        .pipeline-container::before {
+            content: '';
+            position: absolute;
+            left: 24px;
+            top: 0; bottom: 0;
+            width: 2px;
+            background: var(--gradient-accent);
+            opacity: 0.3;
+        }
+
+        .pipeline-step {
+            display: flex;
+            align-items: center;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .step-number {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--bg-dark);
+            border: 2px solid var(--accent-cyan);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-right: 2rem;
+            z-index: 1;
+            color: var(--accent-cyan);
+            flex-shrink: 0;
+            box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);
+        }
+
+        .step-content {
+            background: var(--bg-card);
+            padding: 1.5rem;
+            border-radius: 12px;
+            flex-grow: 1;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Comparison Table */
+        .table-responsive {
+            overflow-x: auto;
+            margin-top: 3rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--bg-card);
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        th, td {
+            padding: 1.2rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.05);
+            font-weight: 600;
+        }
+
+        .cell-yes { color: #27c93f; }
+        .cell-no { color: #ff5f56; }
+        .cell-warn { color: #ffbd2e; }
+
+        /* Code Blocks */
+        .code-block {
+            background: #000;
+            border-radius: 12px;
+            padding: 1.5rem;
+            position: relative;
+            font-family: var(--font-mono);
+            border: 1px solid var(--border-color);
+            margin: 1.5rem 0;
+            overflow-x: auto;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px; right: 10px;
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: var(--text-main);
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        
+        .copy-btn:hover { background: rgba(255,255,255,0.2); }
+
+        pre { margin: 0; color: #a9b7c6; }
+        .token-cmd { color: #cc7832; }
+        .token-str { color: #6a8759; }
+
+        /* Footer */
+        footer {
+            background: var(--bg-card);
+            padding: 4rem 0 2rem;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .footer-links a:hover {
+            color: var(--accent-cyan);
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-header h2 {
+            font-size: clamp(2rem, 4vw, 3rem);
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .hero-actions { flex-direction: column; }
+            .pipeline-container::before { left: 20px; }
+            .step-number { width: 40px; height: 40px; font-size: 1rem; margin-right: 1rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-bg"></div>
+        <div class="container reveal">
+            <h1>Turn web apps into <span class="text-gradient">real APKs</span>.</h1>
+            <p>Convert HTML, CSS, and JS into a native Android APK in seconds.<br>Zero Android Studio. Zero Gradle. Zero Java knowledge.</p>
+            
+            <div class="hero-actions">
+                <a href="#quick-start" class="btn btn-primary">Get Started</a>
+                <a href="https://github.com/ALightbolt4G/nitron" target="_blank" class="btn btn-secondary">View on GitHub</a>
+            </div>
+
+            <div class="terminal">
+                <div class="terminal-header">
+                    <div class="terminal-dot dot-r"></div>
+                    <div class="terminal-dot dot-y"></div>
+                    <div class="terminal-dot dot-g"></div>
+                </div>
+                <div class="terminal-body" id="typed-terminal">
+                    <!-- Typed by JS -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- The Problem -->
+    <section id="problem" class="container">
+        <div class="section-header reveal">
+            <h2>The Pain of Mobile Dev</h2>
+            <p class="text-muted">Why we built Nitron.</p>
+        </div>
+        <div class="cards-grid">
+            <div class="card reveal">
+                <div class="card-icon">🐘</div>
+                <h3>Android Studio</h3>
+                <p class="text-muted">Requires 8GB+ RAM, massive Gradle downloads, complex JDK configurations, and learning native toolchains just to wrap a webview.</p>
+            </div>
+            <div class="card reveal">
+                <div class="card-icon">🐢</div>
+                <h3>Cordova / Capacitor</h3>
+                <p class="text-muted">They claim "web-first" but still force you to install Android SDKs and wait minutes for Gradle builds every time you compile.</p>
+            </div>
+            <div class="card reveal">
+                <div class="card-icon">📱</div>
+                <h3>PWAs</h3>
+                <p class="text-muted">Great for the web, but you can't upload a PWA directly to Google Play. Users prefer installing real apps from the store.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section id="how-it-works" class="container">
+        <div class="section-header reveal">
+            <h2>How It Works</h2>
+            <p class="text-muted">An elegant 8-step pipeline, running entirely in Node.js.</p>
+        </div>
+        
+        <div class="pipeline-container">
+            <!-- Injected by JS -->
+        </div>
+    </section>
+
+    <!-- Comparison -->
+    <section id="comparison" class="container">
+        <div class="section-header reveal">
+            <h2>Comparison</h2>
+            <p class="text-muted">See how Nitron stacks up.</p>
+        </div>
+        <div class="table-responsive reveal">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Nitron</th>
+                        <th>Capacitor</th>
+                        <th>Cordova</th>
+                        <th>PWA</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Needs Android Studio</td>
+                        <td class="cell-yes">❌ Never</td>
+                        <td class="cell-no">✅ Always</td>
+                        <td class="cell-no">✅ Always</td>
+                        <td>—</td>
+                    </tr>
+                    <tr>
+                        <td>Needs Gradle</td>
+                        <td class="cell-yes">❌ Never</td>
+                        <td class="cell-no">✅ Always</td>
+                        <td class="cell-no">✅ Always</td>
+                        <td>—</td>
+                    </tr>
+                    <tr>
+                        <td>npm-only workflow</td>
+                        <td class="cell-yes">✅ Yes</td>
+                        <td class="cell-no">❌ No</td>
+                        <td class="cell-no">❌ No</td>
+                        <td class="cell-yes">✅ Yes</td>
+                    </tr>
+                    <tr>
+                        <td>Real APK output</td>
+                        <td class="cell-yes">✅ Yes</td>
+                        <td class="cell-yes">✅ Yes</td>
+                        <td class="cell-yes">✅ Yes</td>
+                        <td class="cell-no">❌ No</td>
+                    </tr>
+                    <tr>
+                        <td>Build time</td>
+                        <td class="cell-yes">~2 Seconds</td>
+                        <td class="cell-warn">Minutes</td>
+                        <td class="cell-warn">Minutes</td>
+                        <td>—</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Quick Start -->
+    <section id="quick-start" class="container">
+        <div class="section-header reveal">
+            <h2>Quick Start</h2>
+            <p class="text-muted">Get your APK in under 60 seconds.</p>
+        </div>
+
+        <div class="reveal">
+            <p>1. Scaffold a new project:</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <pre><span class="token-cmd">npx</span> nitron init my-app
+<span class="token-cmd">cd</span> my-app</pre>
+            </div>
+            
+            <p>2. Preview locally with live-reload:</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <pre><span class="token-cmd">npm</span> run dev</pre>
+            </div>
+
+            <p>3. Generate your APK:</p>
+            <div class="code-block">
+                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                <pre><span class="token-cmd">npm</span> run build</pre>
+            </div>
+        </div>
+    </section>
+
+    <!-- Configuration & Requirements -->
+    <section class="container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 4rem;">
+        <div class="reveal">
+            <h3>Configuration</h3>
+            <p class="text-muted" style="margin: 1rem 0;">Everything is configured in a simple <code>app.js</code> file.</p>
+            <div class="code-block">
+                <pre>import { app } from 'nitron'
+
+app.init({
+  name: <span class="token-str">"My App"</span>,
+  packageId: <span class="token-str">"com.example.app"</span>,
+  version: <span class="token-str">"1.0.0"</span>,
+  entry: <span class="token-str">"index.html"</span>,
+  orientation: <span class="token-str">"portrait"</span>,
+  permissions: [<span class="token-str">"INTERNET"</span>]
+})</pre>
+            </div>
+        </div>
+
+        <div class="reveal">
+            <h3>Requirements</h3>
+            <p class="text-muted" style="margin: 1rem 0;">Nitron keeps your system clean.</p>
+            
+            <ul style="list-style: none; padding: 0;">
+                <li style="margin-bottom: 1rem; padding: 1rem; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border-color);">
+                    <strong style="color: var(--accent-cyan);">Node.js 18+</strong><br>
+                    <span class="text-muted">Used to run the build pipeline and dev server.</span>
+                </li>
+                <li style="padding: 1rem; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border-color);">
+                    <strong style="color: var(--accent-cyan);">Java Runtime 8+ (JRE)</strong><br>
+                    <span class="text-muted">Strictly used for APK Cryptographic Signing. No JDK needed.</span>
+                </li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-links">
+                <a href="https://github.com/ALightbolt4G/nitron" target="_blank">GitHub</a>
+                <a href="https://www.npmjs.com/package/nitron" target="_blank">npm</a>
+            </div>
+            <p class="text-muted">MIT License. Built with ❤️ by ALightbolt4G</p>
+        </div>
+    </footer>
+
+    <script>
+        // Terminal Animation
+        const termLines = [
+            { text: "$ npx nitron init my-app", class: "text-cyan", delay: 800 },
+            { text: "$ cd my-app", class: "text-cyan", delay: 1500 },
+            { text: "$ npm run build", class: "text-cyan", delay: 2000 },
+            { text: "ℹ Building Android target...", class: "text-muted", delay: 2300, printDelay: 20 },
+            { text: "✓ Built successfully → dist/app.apk (12.4KB) in 2.0s", class: "text-green", delay: 3500, printDelay: 10 }
+        ];
+
+        async function typeTerminal() {
+            const container = document.getElementById('typed-terminal');
+            
+            for (const line of termLines) {
+                await new Promise(r => setTimeout(r, line.delay - (termLines[termLines.indexOf(line)-1]?.delay || 0)));
+                
+                const p = document.createElement('div');
+                p.className = line.class;
+                container.appendChild(p);
+
+                if (line.printDelay) {
+                    for (let i = 0; i < line.text.length; i++) {
+                        p.textContent += line.text[i];
+                        await new Promise(r => setTimeout(r, line.printDelay));
+                    }
+                } else {
+                    p.textContent = line.text;
+                }
+            }
+            
+            const cursor = document.createElement('span');
+            cursor.className = 'cursor';
+            container.appendChild(cursor);
+        }
+
+        // Pipeline Steps Injection
+        const steps = [
+            { title: "Read Config", desc: "Loads app.js configuration." },
+            { title: "Validate", desc: "Ensures package ID and files exist." },
+            { title: "Unpack Template", desc: "Extracts the base Android APK." },
+            { title: "Inject Assets", desc: "Copies HTML/CSS/JS into assets/ folder." },
+            { title: "Patch Manifest", desc: "Writes binary AndroidManifest.xml natively." },
+            { title: "Pack", desc: "Zips it back into .apk format." },
+            { title: "Sign", desc: "Cryptographically signs the APK." },
+            { title: "Output", desc: "Delivers dist/app.apk." }
+        ];
+
+        const pipelineContainer = document.querySelector('.pipeline-container');
+        steps.forEach((step, i) => {
+            pipelineContainer.innerHTML += `
+                <div class="pipeline-step reveal">
+                    <div class="step-number">${i + 1}</div>
+                    <div class="step-content">
+                        <h3 style="color: var(--accent-cyan); margin-bottom: 0.5rem;">${step.title}</h3>
+                        <p class="text-muted">${step.desc}</p>
+                    </div>
+                </div>
+            `;
+        });
+
+        // Intersection Observer for Reveal Animations
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, { threshold: 0.1, rootMargin: "0px 0px -50px 0px" });
+
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+        // Start terminal typing
+        setTimeout(typeTerminal, 500);
+
+        // Copy Button utility
+        function copyCode(btn) {
+            const pre = btn.nextElementSibling;
+            navigator.clipboard.writeText(pre.innerText).then(() => {
+                const originalText = btn.innerText;
+                btn.innerText = 'Copied!';
+                setTimeout(() => btn.innerText = originalText, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
