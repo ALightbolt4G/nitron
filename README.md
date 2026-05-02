@@ -15,6 +15,7 @@
 
 ## What's New in v1.2.0
 - ✅ Linux and Mac support
+> **Note:** Linux and Mac support is implemented but not yet tested on physical machines. Community feedback welcome — if you encounter issues, please open a GitHub issue.
 - ✅ Custom dev server port (\`--port\`)
 - ✅ Improved permissions validation
 - ✅ Multi-page navigation support
@@ -222,6 +223,37 @@ When building for `--target pwa`, Nitron automatically:
 - **Java Runtime** 8+ (for APK signing only — auto-detected)
 
 That's it. No Android SDK, no Android Studio, no Gradle.
+
+---
+
+## Contributing
+
+Contributions are welcome! Nitron is an open-source project and community feedback is what makes it better.
+
+### How to contribute
+
+1. Fork the repository
+2. Create a new branch: `git checkout -b feat/your-feature`
+3. Make your changes
+4. Run the build: `npm run build`
+5. Test locally: `node dist/cli.js build`
+6. Commit and push: `git commit -m "feat: your feature"`
+7. Open a Pull Request
+
+### What we need help with
+
+- Testing on Linux and Mac (most needed right now)
+- Testing with different web frameworks (React, Vue, Svelte, etc.)
+- Testing on different Android versions
+- Bug reports and edge cases
+
+### Reporting issues
+
+Please open a GitHub issue with:
+- Your OS and version
+- Node.js version
+- The full error message
+- Steps to reproduce
 
 ---
 
