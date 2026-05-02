@@ -144,10 +144,11 @@ program
 program
   .command('dev')
   .description('Start local preview server with hot reload')
-  .action(async () => {
+  .option('-p, --port <number>', 'Custom port for the dev server (default: 3000)', '3000')
+  .action(async (options: { port: string }) => {
     logger.banner()
     const { startDevServer } = await import('./dev.js')
-    await startDevServer(process.cwd())
+    await startDevServer(process.cwd(), parseInt(options.port, 10))
   })
 
 // ─── Parse and run ──────────────────────────────────────────────

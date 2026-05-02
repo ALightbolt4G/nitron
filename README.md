@@ -13,6 +13,17 @@
 
 ---
 
+## What's New in v1.2.0
+- ✅ Linux and Mac support
+- ✅ Custom dev server port (\`--port\`)
+- ✅ Improved permissions validation
+- ✅ Multi-page navigation support
+- ✅ Tested with React and Vue
+- ✅ Android compatibility table
+- ✅ Dependency updates and security improvements
+
+---
+
 ## The Problem
 
 Every tool that turns web apps into Android apps eventually forces you to open Android Studio, install Gradle, configure a JDK, and think like an Android developer.
@@ -96,6 +107,29 @@ npm run build
 The entire process takes seconds, uses ~200MB of RAM, and never shows you a single Android error message.
 
 > **Technical Note:** Nitron uses a custom, pure JavaScript AXML binary encoder. This means it generates the binary `AndroidManifest.xml` natively in Node.js, completely eliminating the need for bulky Android dependencies like `apktool` or `aapt2`.
+
+---
+
+## Framework Compatibility
+
+Nitron seamlessly bundles the output of any web framework. Build your app using your favorite tool, and point Nitron to the output directory (e.g. `dist/` or `build/`).
+
+- **React / Vite**: 100% compatible. Ensure you use relative paths in your build config (`base: './'`).
+- **Vue**: 100% compatible.
+- **Vanilla JS**: 100% compatible.
+
+---
+
+## Supported Android Versions
+
+| Android Version | API Level | Supported |
+|---|---|---|
+| Android 5.0 (Lollipop) | 21 | ✅ Min supported |
+| Android 9.0 (Pie) | 28 | ✅ |
+| Android 11 | 30 | ✅ |
+| Android 13 | 33 | ✅ |
+| Android 14 | 34 | ✅ Target SDK |
+| Android 16 | 36 | ✅ Tested |
 
 ---
 
