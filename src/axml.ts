@@ -118,6 +118,7 @@ class AxmlBuilder {
     this.addString(config.versionName)
     this.addString(config.appLabel)
     this.addString(config.activityName)
+    this.addString('@mipmap/ic_launcher')
     for (const perm of config.permissions) {
       this.addString(`android.permission.${perm}`)
     }
@@ -282,6 +283,7 @@ class AxmlBuilder {
     // <application>
     chunks.push(this.writeStartElement(-1, this.getIdx('application'), [
       this.attr(nsUriIdx, this.getIdx('label'), config.appLabel, TYPE_STRING),
+      this.attr(nsUriIdx, this.getIdx('icon'), '@mipmap/ic_launcher', TYPE_STRING),
       this.attr(nsUriIdx, this.getIdx('hardwareAccelerated'), true, TYPE_INT_BOOLEAN),
       this.attr(nsUriIdx, this.getIdx('usesCleartextTraffic'), true, TYPE_INT_BOOLEAN),
     ]))

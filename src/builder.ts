@@ -22,7 +22,7 @@ import { writeFile } from 'node:fs/promises'
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
 
-const BUILD_STEPS = 8
+const BUILD_STEPS = 9
 
 /**
  * Get path to the base APK template bundled with Nitron.
@@ -76,8 +76,31 @@ export async function build(config: NitronConfig, options: BuildOptions): Promis
     const fileCount = await injectAssets(options.projectDir, assetsDir)
     logger.success(`Injected ${fileCount} files`)
 
+    // ─── Step 2.5: Process App Icon ──────────────────────────
+    if (config.icon && config.icon !== 'default') {
+      logger.step(3, BUILD_STEPS, 'Processing app icon...')
+      const iconSrc = join(options.projectDir, config.icon)
+      try {
+        await stat(iconSrc)
+        const mipmapDirs = [
+          'res/mipmap-mdpi',
+          'res/mipmap-hdpi',
+          'res/mipmap-xhdpi',
+          'res/mipmap-xxhdpi',
+          'res/mipmap-xxxhdpi',
+        ]
+        for (const dir of mipmapDirs) {
+          const destDir = join(buildDir, dir)
+          await mkdir(destDir, { recursive: true })
+          await copyFile(iconSrc, join(destDir, 'ic_launcher.png'))
+        }
+      } catch (e: any) {
+        logger.warn(`Failed to process icon "${config.icon}": ${e.message}. Using default icon.`)
+      }
+    }
+
     // ─── Step 3: Generate Manifest ──────────────────────────
-    logger.step(3, BUILD_STEPS, 'Generating AndroidManifest.xml...')
+    logger.step(4, BUILD_STEPS, 'Generating AndroidManifest.xml...')
     const manifestBinary = generateManifest(config)
     const manifestPath = join(buildDir, 'AndroidManifest.xml')
     await writeFile(manifestPath, manifestBinary)
@@ -87,12 +110,12 @@ export async function build(config: NitronConfig, options: BuildOptions): Promis
     }
 
     // ─── Step 4: Pack APK ───────────────────────────────────
-    logger.step(4, BUILD_STEPS, 'Packing APK...')
+    logger.step(5, BUILD_STEPS, 'Packing APK...')
     const unsignedPath = join(options.outputDir, 'unsigned.apk')
     await packApk(buildDir, unsignedPath)
 
     // ─── Step 5: Sign APK ───────────────────────────────────
-    logger.step(5, BUILD_STEPS, 'Signing APK...')
+    logger.step(6, BUILD_STEPS, 'Signing APK...')
     const signedDir = join(options.outputDir, '.signing-temp')
     const signedApkPath = await signApk(unsignedPath, signedDir, {
       release: options.release,
@@ -100,12 +123,12 @@ export async function build(config: NitronConfig, options: BuildOptions): Promis
     })
 
     // ─── Step 6: Move to final output ───────────────────────
-    logger.step(6, BUILD_STEPS, 'Finalizing...')
+    logger.step(7, BUILD_STEPS, 'Finalizing...')
     const finalPath = join(options.outputDir, 'app.apk')
     await copyFile(signedApkPath, finalPath)
 
     // ─── Step 7: Get file size & Breakdown ──────────────────
-    logger.step(7, BUILD_STEPS, 'Verifying output...')
+    logger.step(8, BUILD_STEPS, 'Verifying output...')
     const apkStat = await stat(finalPath)
 
     let assetsSize = 0
@@ -128,7 +151,7 @@ export async function build(config: NitronConfig, options: BuildOptions): Promis
     const otherSize = apkStat.size - assetsSize - dexSize
 
     // ─── Step 8: Cleanup ────────────────────────────────────
-    logger.step(8, BUILD_STEPS, 'Cleaning up...')
+    logger.step(9, BUILD_STEPS, 'Cleaning up...')
 
     // Clean up temp files
     await rm(unsignedPath, { force: true })

@@ -1,6 +1,6 @@
 {
   "name": "@ALightbolt4G/nitron",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "HTML/CSS/JS to Android APK builder",
   "publishConfig": {
     "registry": "https://npm.pkg.github.com"
