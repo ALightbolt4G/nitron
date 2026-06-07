@@ -2,9 +2,6 @@
   "name": "@ALightbolt4G/nitron",
   "version": "1.3.0",
   "description": "HTML/CSS/JS to Android APK builder",
-  "publishConfig": {
-    "registry": "https://npm.pkg.github.com"
-  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ALightbolt4G/nitron.git"
