@@ -26,8 +26,9 @@ program
   .option('--debug', 'Enable verbose debug output', false)
   .option('--release', 'Sign APK with release keystore for Google Play', false)
   .option('-t, --target <target>', 'Target output: android, pwa, or all', 'android')
-  .action(async (options: { debug: boolean, target: string, release: boolean }) => {
-    const projectDir = process.cwd()
+  .option('-p, --project <dir>', 'Project directory to build', process.cwd())
+  .action(async (options: { debug: boolean, target: string, release: boolean, project: string }) => {
+    const projectDir = resolve(options.project)
 
     logger.banner()
 

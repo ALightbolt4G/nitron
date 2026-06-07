@@ -12,12 +12,13 @@ import { dirname } from 'node:path'
 
 import { unpackTemplate } from './unpacker.js'
 import { injectAssets } from './injector.js'
-import { generateManifest } from './manifest.js'
+// Removing manifest.ts import since aapt2 generates it now
 import { packApk } from './packer.js'
 import { signApk } from './signer.js'
 import { logger } from './logger.js'
 import type { NitronConfig, BuildOptions, BuildResult } from './types.js'
 import { writeFile } from 'node:fs/promises'
+import { buildResources } from './aapt2-resource-builder.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -73,40 +74,17 @@ export async function build(config: NitronConfig, options: BuildOptions): Promis
     // ─── Step 2: Inject Assets ──────────────────────────────
     logger.step(2, BUILD_STEPS, 'Injecting web assets...')
     const assetsDir = join(buildDir, 'assets')
-    const fileCount = await injectAssets(options.projectDir, assetsDir)
+    const fileCount = await injectAssets(config, options.projectDir, assetsDir)
     logger.success(`Injected ${fileCount} files`)
 
-    // ─── Step 2.5: Process App Icon ──────────────────────────
-    if (config.icon && config.icon !== 'default') {
-      logger.step(3, BUILD_STEPS, 'Processing app icon...')
-      const iconSrc = join(options.projectDir, config.icon)
-      try {
-        await stat(iconSrc)
-        const mipmapDirs = [
-          'res/mipmap-mdpi',
-          'res/mipmap-hdpi',
-          'res/mipmap-xhdpi',
-          'res/mipmap-xxhdpi',
-          'res/mipmap-xxxhdpi',
-        ]
-        for (const dir of mipmapDirs) {
-          const destDir = join(buildDir, dir)
-          await mkdir(destDir, { recursive: true })
-          await copyFile(iconSrc, join(destDir, 'ic_launcher.png'))
-        }
-      } catch (e: any) {
-        logger.warn(`Failed to process icon "${config.icon}": ${e.message}. Using default icon.`)
-      }
-    }
+    // ─── Step 3: Build Android Resources (aapt2) ────────────
+    logger.step(3, BUILD_STEPS, 'Processing app icon & resources (aapt2)...')
+    await buildResources(config, options.projectDir, buildDir)
 
-    // ─── Step 3: Generate Manifest ──────────────────────────
-    logger.step(4, BUILD_STEPS, 'Generating AndroidManifest.xml...')
-    const manifestBinary = generateManifest(config)
-    const manifestPath = join(buildDir, 'AndroidManifest.xml')
-    await writeFile(manifestPath, manifestBinary)
+    // AndroidManifest.xml is now generated and injected by aapt2-resource-builder!
 
     if (options.debug) {
-      logger.info(`Manifest size: ${formatSize(manifestBinary.length)}`)
+      logger.info(`Android resources successfully compiled and linked.`)
     }
 
     // ─── Step 4: Pack APK ───────────────────────────────────

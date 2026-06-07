@@ -110,11 +110,14 @@ export async function validateProject(
 
   // --- Check icon file exists (warning only, not fatal) ---
   if (config.icon) {
-    const iconPath = resolve(projectDir, config.icon)
-    try {
-      await access(iconPath)
-    } catch {
-      warnings.push(`Icon not found: ${config.icon} — using default icon`)
+    const iconSrc = typeof config.icon === 'string' ? config.icon : config.icon.src
+    if (iconSrc) {
+      const iconPath = resolve(projectDir, iconSrc)
+      try {
+        await access(iconPath)
+      } catch {
+        warnings.push(`Icon not found: ${iconSrc} — using default icon`)
+      }
     }
   }
 

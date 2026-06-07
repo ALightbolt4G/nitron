@@ -1,0 +1,11 @@
+{
+  "name": "icon-test",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "build": "nitron build"
+  },
+  "dependencies": {
+    "@ALightbolt4G/nitron": "file:.."
+  }
+}

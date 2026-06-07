@@ -1,16 +1,15 @@
-// manifest.ts — Generate binary AndroidManifest.xml from NitronConfig
+// manifest.ts — Generate plain text AndroidManifest.xml from NitronConfig
 //
-// Takes the developer's config and produces a valid binary AXML manifest
-// that Android can parse. Uses the custom AXML encoder in axml.ts.
+// Generates a valid, standards-compliant AndroidManifest.xml string which
+// is then compiled into a binary AXML file automatically by aapt2.
 
-import { encodeManifestToAxml } from './axml.js'
 import type { NitronConfig } from './types.js'
 
-/** Map orientation string to Android constant */
-const ORIENTATION_MAP: Record<string, number> = {
-  portrait: 1,
-  landscape: 0,
-  auto: -1,
+/** Map orientation string to Android XML attribute values */
+const ORIENTATION_MAP: Record<string, string> = {
+  portrait: 'portrait',
+  landscape: 'landscape',
+  auto: 'unspecified',
 }
 
 const KNOWN_PERMISSIONS = new Set([
@@ -31,14 +30,15 @@ const KNOWN_PERMISSIONS = new Set([
 ])
 
 /**
- * Generate a binary AndroidManifest.xml buffer from the NitronConfig.
+ * Generate a standard AndroidManifest.xml string from the NitronConfig.
  *
  * @param config - The developer's app configuration
- * @returns Buffer containing the binary AXML manifest
+ * @returns String containing the plain XML manifest
  */
-export function generateManifest(config: NitronConfig): Buffer {
-  const orientation = ORIENTATION_MAP[config.orientation] ?? -1
-
+export function generateManifestXml(config: NitronConfig): string {
+  const orientation = ORIENTATION_MAP[config.orientation] ?? 'unspecified'
+  const versionCode = versionToCode(config.version)
+  
   // Always include INTERNET permission (needed for WebView)
   const permissions = [...new Set([...config.permissions.map(p => p.toUpperCase()), 'INTERNET'])]
 
@@ -48,18 +48,42 @@ export function generateManifest(config: NitronConfig): Buffer {
     }
   }
 
-  // The activity class name — fixed to the template's WebView activity
+  const permissionsXml = permissions
+    .map(p => `    <uses-permission android:name="android.permission.${p}" />`)
+    .join('\n')
+
   const activityName = 'com.nicron.webview.MainActivity'
 
-  return encodeManifestToAxml({
-    packageId: config.packageId,
-    versionCode: versionToCode(config.version),
-    versionName: config.version,
-    appLabel: config.name,
-    permissions,
-    activityName,
-    screenOrientation: orientation,
-  })
+  return `<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="${config.packageId}"
+    android:versionCode="${versionCode}"
+    android:versionName="${config.version}">
+
+    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34" />
+    
+${permissionsXml}
+
+    <application
+        android:label="${config.name}"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher"
+        android:hardwareAccelerated="true"
+        android:usesCleartextTraffic="true">
+        
+        <activity
+            android:name="${activityName}"
+            android:exported="true"
+            android:configChanges="orientation|keyboardHidden|screenSize"
+            android:screenOrientation="${orientation}">
+            
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>`
 }
 
 /**

@@ -19,8 +19,8 @@ export interface NitronConfig {
   statusBar: boolean
   /** Android permissions the app needs (e.g. ["CAMERA", "INTERNET"]) */
   permissions: string[]
-  /** Path to the app icon image, or null for default */
-  icon: string | null
+  /** App icon configuration */
+  icon: string | { src: string; background?: string; adaptive?: boolean } | null
 }
 
 /**

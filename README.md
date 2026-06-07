@@ -13,10 +13,21 @@
 
 ---
 
+## What's New in v1.3.0 (The "White Screen & Missing Icon" Terminator Update)
+- 🐛 **SQUASHED: The White Screen of Death (Framework Absolute Paths):** 
+  Fixed a massive issue where React/Vue apps built with absolute paths (`src="/static/js/main.js"`) resulted in a blank white screen. Android's WebView reads `/` as the root of the entire phone file system (`file:///`), not `android_asset/`. We implemented an intelligent path rewriting engine in `injector.ts` to convert absolute paths to relative paths (`./`) on the fly, guaranteeing any web framework output runs flawlessly.
+- 🐛 **SQUASHED: The Invisible App Icon (Adaptive Icon XML Drama):** 
+  Fixed an incredibly obscure, ridiculous Android bug where the adaptive icon wouldn't render, defaulting to the generic Android robot. The culprit? We were using `android:color` instead of `android:drawable` for the adaptive icon background layer inside the `aapt2` generator. Modern launchers silently reject `android:color` in this context. Nitron now outputs 100% compliant `ic_launcher.xml` structures matching Android Studio exactly!
+- ✅ **Custom Adaptive Icon Backgrounds:** You can now pass an object to `icon` in `app.js` to set a custom background color alongside your foreground image! (`{ src: "image.png", background: "#000000" }`)
+- ✅ **New CLI Flag (`--project`):** Build an APK from any directory without changing your `cwd`!
+- ✅ **Bypassed AXML Encoder:** We fully migrated manifest generation from our fragile custom AXML binary encoder to `aapt2 link`, meaning the generated APK's `AndroidManifest.xml` is 100% native, flawless, and Google Play compliant.
+
+---
+
 ## What's New in v1.2.0
 - ✅ Linux and Mac support
 > **Note:** Linux and Mac support is implemented but not yet tested on physical machines. Community feedback welcome — if you encounter issues, please open a GitHub issue.
-- ✅ Custom dev server port (\`--port\`)
+- ✅ Custom dev server port (`--port`)
 - ✅ Improved permissions validation
 - ✅ Multi-page navigation support
 - ✅ Tested with React and Vue
@@ -83,7 +94,7 @@ app.init({
 | `orientation` | `string` | `"portrait"` | `portrait` / `landscape` / `auto` |
 | `statusBar` | `boolean` | `true` | Show or hide the Android status bar |
 | `permissions` | `string[]` | `[]` | Android permissions (e.g. `CAMERA`, `INTERNET`) |
-| `icon` | `string` | `null` | Path to app icon image |
+| `icon` | `string` or `Object` | `null` | Path to app icon image, or object: `{ src: "icon.png", background: "#000000" }` |
 
 ---
 
