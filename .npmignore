@@ -1,12 +1,16 @@
-test-app/
 scripts/
 *.bat
 tsup.config.ts
 tsconfig.json
 src/
+browser/
+
+# Test applications
+test-app/
 my-final-test/
 real-zero-test/
 v12-test/
-browser/
-test-app/
+nitron-test-app/
 test-icon/
+test-extract/
+real apk app for test/

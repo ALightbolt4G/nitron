@@ -2,11 +2,15 @@ node_modules/
 dist/
 *.tsbuildinfo
 
-# Test app
+# Test apps and temp folders
 test-app/
 my-final-test/
 real-zero-test/
 v12-test/
+nitron-test-app/
+real apk app for test/
+test-extract/
+test-icon/
 
 # OS files
 .DS_Store
