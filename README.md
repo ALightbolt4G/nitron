@@ -118,7 +118,7 @@ npm run build
 
 The entire process takes seconds, uses ~200MB of RAM, and never shows you a single Android error message.
 
-> **Technical Note:** Nitron uses a custom, pure JavaScript AXML binary encoder. This means it generates the binary `AndroidManifest.xml` natively in Node.js, completely eliminating the need for bulky Android dependencies like `apktool` or `aapt2`.
+> **Technical Note:** Unlike other tools that require a massive Android SDK installation, Nitron uses an auto-downloaded, lightweight `aapt2` sidecar (~5MB) to compile resources and manifest natively. This guarantees 100% compliant `AndroidManifest.xml` and adaptive icons, with zero setup required from the developer.
 
 ---
 
