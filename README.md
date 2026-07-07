@@ -13,6 +13,11 @@
 
 ---
 
+## What's New in v1.3.1
+- 🐛 **SQUASHED: Keystore Password Validation Bug:** Fixed an issue during `nitron keystore` where the password confirmation step would incorrectly fail with "Passwords do not match" or crash, even when the passwords matched exactly.
+
+---
+
 ## What's New in v1.3.0 (The "White Screen & Missing Icon" Terminator Update)
 - 🐛 **SQUASHED: The White Screen of Death (Framework Absolute Paths):** 
   Fixed a massive issue where React/Vue apps built with absolute paths (`src="/static/js/main.js"`) resulted in a blank white screen. Android's WebView reads `/` as the root of the entire phone file system (`file:///`), not `android_asset/`. We implemented an intelligent path rewriting engine in `injector.ts` to convert absolute paths to relative paths (`./`) on the fly, guaranteeing any web framework output runs flawlessly.
