@@ -36,6 +36,7 @@ export async function generateKeystore(projectDir: string) {
     // File doesn't exist, proceed
   }
 
+  let initialPassword = ''
   const response = await prompts([
     {
       type: 'text',
@@ -48,13 +49,19 @@ export async function generateKeystore(projectDir: string) {
       type: 'password',
       name: 'password',
       message: 'Keystore password (min 6 chars)',
-      validate: value => value.length >= 6 ? true : 'Password must be at least 6 characters'
+      validate: value => {
+        if (value.length >= 6) {
+          initialPassword = value
+          return true
+        }
+        return 'Password must be at least 6 characters'
+      }
     },
     {
       type: 'password',
       name: 'passwordConfirm',
       message: 'Confirm password',
-      validate: (value, values) => value === values.password ? true : 'Passwords do not match'
+      validate: value => value === initialPassword ? true : 'Passwords do not match'
     },
     {
       type: 'text',
