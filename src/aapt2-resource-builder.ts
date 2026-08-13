@@ -153,17 +153,21 @@ export async function buildResources(
       : '#FFFFFF';
 
     // 2. Generate Sharp-Resized Icons (Foreground & Legacy)
+    let iconSrc: string | null = null;
     if (config.icon && config.icon !== 'default') {
-      const iconSrc = typeof config.icon === 'string' 
-        ? (config.icon ? resolve(projectDir, config.icon) : null)
+      iconSrc = typeof config.icon === 'string' 
+        ? resolve(projectDir, config.icon)
         : (config.icon?.src ? resolve(projectDir, config.icon.src) : null);
               
       try {
         await access(iconSrc!);
       } catch {
-        throw new Error(`[ERROR] Source icon not found at: ${iconSrc}`);
+        console.warn(`[WARNING] Source icon not found at: ${iconSrc}. Using default icon.`);
+        iconSrc = null; // Fallback to default
       }
+    }
 
+    if (iconSrc) {
       for (const { dpi, size } of mipmaps) {
         const destDir = join(resDir, `mipmap-${dpi}`);
         
@@ -178,7 +182,19 @@ export async function buildResources(
           .toFile(join(destDir, 'ic_launcher_foreground.png'));
       }
     } else {
-      throw new Error('[ERROR] config.icon must be provided to build resources');
+      console.warn('[WARNING] No icon specified in config. Using default transparent icon.');
+      // Generate a 1x1 transparent default icon dynamically to avoid bundling binary files
+      const transparentPixel = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==', 'base64');
+      
+      for (const { dpi, size } of mipmaps) {
+        const destDir = join(resDir, `mipmap-${dpi}`);
+        await sharp(transparentPixel)
+          .resize(size, size, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
+          .toFile(join(destDir, 'ic_launcher.png'));
+        await sharp(transparentPixel)
+          .resize(size, size, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
+          .toFile(join(destDir, 'ic_launcher_foreground.png'));
+      }
     }
 
     // 3. Generate Valid Resource XMLs

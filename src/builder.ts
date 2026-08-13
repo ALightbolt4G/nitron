@@ -73,7 +73,9 @@ export async function build(config: NitronConfig, options: BuildOptions): Promis
 
     // ─── Step 2: Inject Assets ──────────────────────────────
     logger.step(2, BUILD_STEPS, 'Injecting web assets...')
-    const assetsDir = join(buildDir, 'assets')
+    // v2.0: Assets go into assets/www/ to match the HTTPS-like origin
+    // served by shouldInterceptRequest() in MainActivity
+    const assetsDir = join(buildDir, 'assets', 'www')
     const fileCount = await injectAssets(config, options.projectDir, assetsDir)
     logger.success(`Injected ${fileCount} files`)
 

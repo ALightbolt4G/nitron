@@ -1,8 +1,10 @@
 // types.ts — Shared TypeScript interfaces for Nitron
+//
+// v2.0: Added network, splashScreen, and webview configuration options.
 
 /**
  * The unified configuration object that drives the entire build pipeline.
- * Merged from the developer's app.js config and package.json.
+ * Merged from nitron.config.json, app.js, or package.json.
  */
 export interface NitronConfig {
   /** App display name shown on the device home screen */
@@ -21,6 +23,36 @@ export interface NitronConfig {
   permissions: string[]
   /** App icon configuration */
   icon: string | { src: string; background?: string; adaptive?: boolean } | null
+
+  /**
+   * Network configuration.
+   * By default, only HTTPS traffic is allowed.
+   */
+  network?: {
+    /** Allow HTTP cleartext traffic (default: false, HTTPS only) */
+    cleartext?: boolean
+  }
+
+  /**
+   * Splash screen configuration.
+   * Displays a solid-color overlay until the first page finishes loading.
+   */
+  splashScreen?: {
+    /** Background color in hex (default: "#FFFFFF") */
+    backgroundColor?: string
+  } | null
+
+  /**
+   * WebView runtime behavior options.
+   * These are injected as <meta-data> in AndroidManifest.xml
+   * and read by MainActivity at runtime.
+   */
+  webview?: {
+    /** Clear WebView cache on app start (default: false) */
+    clearCacheOnStart?: boolean
+    /** Back button behavior: 'history' navigates back, 'exit' closes app (default: 'history') */
+    backButton?: 'history' | 'exit'
+  }
 }
 
 /**

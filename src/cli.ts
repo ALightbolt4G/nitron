@@ -17,7 +17,7 @@ const program = new Command()
 program
   .name('nitron')
   .description('Convert HTML/CSS/JS into Android APK — zero Android knowledge required')
-  .version('0.1.0')
+  .version('2.0.0')
 
 // ─── BUILD COMMAND ───────────────────────────────────────────────
 program
@@ -135,10 +135,11 @@ program
 program
   .command('init [name]')
   .description('Create a new Nitron project')
-  .action(async (name?: string) => {
+  .option('--preset <framework>', 'Scaffold for a specific framework (nextjs, vite, react, vanilla)')
+  .action(async (name: string | undefined, options: { preset?: string }) => {
     logger.banner()
     const { initProject } = await import('./init.js')
-    await initProject(name)
+    await initProject(name, options.preset)
   })
 
 // ─── DEV COMMAND (Phase 3) ───────────────────────────────────────

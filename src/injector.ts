@@ -1,14 +1,16 @@
-// injector.ts — Copy developer's web files into the APK assets/ directory
+// injector.ts — Copy developer's web files into the APK assets/www/ directory
 //
-// Copies the appropriate web assets from the developer's project into
-// the unpacked APK's assets/ folder.
+// v2.0 Architecture:
+//   Assets are served via an HTTPS-like origin (appassets.androidplatform.net)
+//   by shouldInterceptRequest() in MainActivity.java. This means:
+//   - Absolute paths (/_next/, /assets/, /static/) work naturally
+//   - No regex path-rewriting needed as primary solution
+//   - Directory structure is preserved exactly as the framework outputs it
 //
-// Entry point resolution:
-//   - If entry is "index.html" → copy entire project root to assets/
-//   - If entry is "build/index.html" → copy contents of build/ to assets/
-//   - If entry file is NOT "index.html" → create a redirect index.html
+// Assets are placed in assets/www/ (not assets/ root) to keep the
+// APK's asset namespace clean and match the URL path mapping.
 //
-// Excluded: app.js, package.json, node_modules/, dist/, .git/
+// Excluded: app.js, nitron.config.json, package.json, node_modules/, dist/, .git/
 
 import { readdir, copyFile, mkdir, readFile, writeFile, access } from 'node:fs/promises'
 import { join, dirname, basename } from 'node:path'
@@ -17,6 +19,7 @@ import type { NitronConfig } from './types.js'
 /** Files and directories to exclude from injection */
 const EXCLUDED = new Set([
   'app.js',
+  'nitron.config.json',
   'package.json',
   'package-lock.json',
   'node_modules',
@@ -28,30 +31,29 @@ const EXCLUDED = new Set([
 ])
 
 /**
- * Copy the developer's web assets into the APK's assets/ directory.
+ * Copy the developer's web assets into the APK's assets/www/ directory.
  *
  * Smart entry-point resolution:
- * - "index.html"       → copies project root to assets/
- * - "build/index.html" → copies only build/ contents to assets/
+ * - "index.html"       → copies project root to assets/www/
+ * - "out/index.html"   → copies only out/ contents to assets/www/
  * - "dist/app.html"    → copies dist/ contents + creates redirect index.html
  *
  * @param config - The Nitron project configuration
  * @param projectDir - Developer's project directory
- * @param assetsDir - assets/ directory inside unpacked APK
+ * @param assetsDir - assets/www/ directory inside unpacked APK
  * @returns Number of files copied
  */
 export async function injectAssets(config: NitronConfig, projectDir: string, assetsDir: string): Promise<number> {
   let count = 0
   const entryPath = (config.entry || 'index.html').replace(/\\/g, '/')
-  const entryDir = dirname(entryPath)   // 'build' or '.'
+  const entryDir = dirname(entryPath)   // 'out' or '.'
   const entryFile = basename(entryPath) // 'index.html' or 'app.html'
 
   // Determine the source directory to copy from.
-  // If entry is inside a subdirectory (e.g. build/index.html), copy
+  // If entry is inside a subdirectory (e.g. out/index.html), copy
   // only that subdirectory's contents — NOT the whole project root.
   // This prevents bloat (copying src/, public/, etc.) and ensures
-  // relative paths in framework builds (React, Vite, Next.js) work
-  // because the build output lands at the root of assets/.
+  // relative paths in framework builds work correctly.
   let sourceDir: string
   if (entryDir !== '.') {
     sourceDir = join(projectDir, entryDir)
@@ -69,6 +71,9 @@ export async function injectAssets(config: NitronConfig, projectDir: string, ass
     sourceDir = projectDir
   }
 
+  // Ensure the target assets/www/ directory exists
+  await mkdir(assetsDir, { recursive: true })
+
   async function copyRecursive(srcDir: string, destDir: string): Promise<void> {
     const entries = await readdir(srcDir, { withFileTypes: true })
 
@@ -83,38 +88,10 @@ export async function injectAssets(config: NitronConfig, projectDir: string, ass
         await mkdir(destPath, { recursive: true })
         await copyRecursive(srcPath, destPath)
       } else if (entry.isFile()) {
-        if (entry.name.endsWith('.html')) {
-          let html = await readFile(srcPath, 'utf-8')
-
-          // ─── Fix absolute paths for Android WebView ───
-          // Framework builds (React, Vue, Vite) use absolute paths like
-          // src="/static/js/main.js". In Android WebView with file:// protocol,
-          // "/" resolves to the filesystem root, NOT android_asset/.
-          // Rewrite "/path" → "./path" so paths resolve relative to index.html.
-          // Negative lookahead (?!//) avoids breaking protocol-relative URLs.
-          html = html.replace(/(src|href|action)="\/(?!\/)/g, '$1="./')
-
-          // Multi-page navigation support for WebView
-          const navScript = `
-<script>
-  // Nitron Multi-Page Support
-  document.addEventListener('click', (e) => {
-    const a = e.target.closest('a');
-    if (a && a.href && (a.origin === window.location.origin || !a.href.startsWith('http'))) {
-      e.preventDefault();
-      window.location.href = a.href;
-    }
-  });
-</script>`
-          if (html.includes('</head>')) {
-            html = html.replace('</head>', navScript + '\n</head>')
-          } else {
-            html += navScript
-          }
-          await writeFile(destPath, html)
-        } else {
-          await copyFile(srcPath, destPath)
-        }
+        // Copy all files as-is — no path rewriting needed.
+        // The HTTPS-like origin (appassets.androidplatform.net) means
+        // absolute paths resolve correctly within the WebView.
+        await copyFile(srcPath, destPath)
         count++
       }
     }
@@ -123,7 +100,7 @@ export async function injectAssets(config: NitronConfig, projectDir: string, ass
   await copyRecursive(sourceDir, assetsDir)
 
   // ─── Entry file redirect ───────────────────────────────────
-  // The Android Java WebView template always loads assets/index.html.
+  // The MainActivity always loads /index.html on the asset domain.
   // If the entry file has a different name (e.g. "app.html"), we
   // create a tiny index.html that instantly redirects to it.
   if (entryFile !== 'index.html') {

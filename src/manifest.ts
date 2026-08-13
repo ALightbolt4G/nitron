@@ -2,6 +2,9 @@
 //
 // Generates a valid, standards-compliant AndroidManifest.xml string which
 // is then compiled into a binary AXML file automatically by aapt2.
+//
+// v2.0: Added <meta-data> for WebView runtime configuration,
+//       conditional cleartext traffic, and synced permissions dictionary.
 
 import type { NitronConfig } from './types.js'
 
@@ -12,21 +15,41 @@ const ORIENTATION_MAP: Record<string, string> = {
   auto: 'unspecified',
 }
 
+/**
+ * Known valid Android permissions (synced with validator.ts).
+ * Used here only for the "unknown permission" warning during manifest generation.
+ */
 const KNOWN_PERMISSIONS = new Set([
-  'INTERNET',
-  'CAMERA',
-  'ACCESS_FINE_LOCATION',
-  'ACCESS_COARSE_LOCATION',
-  'READ_EXTERNAL_STORAGE',
-  'WRITE_EXTERNAL_STORAGE',
-  'RECORD_AUDIO',
-  'VIBRATE',
-  'ACCESS_NETWORK_STATE',
-  'BLUETOOTH',
-  'BLUETOOTH_ADMIN',
-  'WAKE_LOCK',
-  'READ_CONTACTS',
-  'RECEIVE_BOOT_COMPLETED'
+  // Network
+  'INTERNET', 'ACCESS_NETWORK_STATE', 'ACCESS_WIFI_STATE', 'CHANGE_WIFI_STATE',
+  'CHANGE_NETWORK_STATE', 'NEARBY_WIFI_DEVICES',
+  // Location
+  'ACCESS_FINE_LOCATION', 'ACCESS_COARSE_LOCATION', 'ACCESS_BACKGROUND_LOCATION',
+  // Camera & Media
+  'CAMERA', 'RECORD_AUDIO', 'READ_MEDIA_IMAGES', 'READ_MEDIA_VIDEO',
+  'READ_MEDIA_AUDIO', 'READ_MEDIA_VISUAL_USER_SELECTED',
+  // Storage
+  'READ_EXTERNAL_STORAGE', 'WRITE_EXTERNAL_STORAGE', 'MANAGE_EXTERNAL_STORAGE',
+  // Contacts & Calendar
+  'READ_CONTACTS', 'WRITE_CONTACTS', 'GET_ACCOUNTS', 'READ_CALENDAR', 'WRITE_CALENDAR',
+  // Phone & SMS
+  'CALL_PHONE', 'READ_PHONE_STATE', 'READ_PHONE_NUMBERS', 'SEND_SMS',
+  'RECEIVE_SMS', 'READ_SMS', 'RECEIVE_MMS', 'RECEIVE_WAP_PUSH', 'ANSWER_PHONE_CALLS',
+  // Bluetooth
+  'BLUETOOTH', 'BLUETOOTH_ADMIN', 'BLUETOOTH_CONNECT', 'BLUETOOTH_SCAN', 'BLUETOOTH_ADVERTISE',
+  // Sensors
+  'BODY_SENSORS', 'BODY_SENSORS_BACKGROUND', 'ACTIVITY_RECOGNITION', 'HIGH_SAMPLING_RATE_SENSORS',
+  // Notifications
+  'POST_NOTIFICATIONS',
+  // Biometrics
+  'USE_BIOMETRIC', 'USE_FINGERPRINT',
+  // System
+  'VIBRATE', 'WAKE_LOCK', 'RECEIVE_BOOT_COMPLETED', 'FOREGROUND_SERVICE',
+  'FOREGROUND_SERVICE_LOCATION', 'FOREGROUND_SERVICE_CAMERA', 'FOREGROUND_SERVICE_MICROPHONE',
+  'FOREGROUND_SERVICE_DATA_SYNC', 'FOREGROUND_SERVICE_MEDIA_PLAYBACK',
+  'FOREGROUND_SERVICE_CONNECTED_DEVICE', 'REQUEST_IGNORE_BATTERY_OPTIMIZATIONS',
+  'SCHEDULE_EXACT_ALARM', 'USE_EXACT_ALARM', 'REQUEST_INSTALL_PACKAGES',
+  'SYSTEM_ALERT_WINDOW', 'NFC', 'FLASHLIGHT', 'SET_ALARM',
 ])
 
 /**
@@ -38,6 +61,7 @@ const KNOWN_PERMISSIONS = new Set([
 export function generateManifestXml(config: NitronConfig): string {
   const orientation = ORIENTATION_MAP[config.orientation] ?? 'unspecified'
   const versionCode = versionToCode(config.version)
+  const allowCleartext = config.network?.cleartext ?? false
   
   // Always include INTERNET permission (needed for WebView)
   const permissions = [...new Set([...config.permissions.map(p => p.toUpperCase()), 'INTERNET'])]
@@ -54,6 +78,23 @@ export function generateManifestXml(config: NitronConfig): string {
 
   const activityName = 'com.nicron.webview.MainActivity'
 
+  // ─── Build <meta-data> entries for WebView runtime config ───
+  const metaDataEntries: string[] = []
+
+  // Back button behavior
+  const backButton = config.webview?.backButton ?? 'history'
+  metaDataEntries.push(`            <meta-data android:name="nitron.backButton" android:value="${backButton}" />`)
+
+  // Clear cache on start
+  const clearCache = config.webview?.clearCacheOnStart ?? false
+  metaDataEntries.push(`            <meta-data android:name="nitron.clearCacheOnStart" android:value="${clearCache}" />`)
+
+  // Splash screen background color
+  const splashBg = config.splashScreen?.backgroundColor ?? '#FFFFFF'
+  metaDataEntries.push(`            <meta-data android:name="nitron.splashBackground" android:value="${splashBg}" />`)
+
+  const metaDataXml = metaDataEntries.join('\n')
+
   return `<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="${config.packageId}"
@@ -69,7 +110,7 @@ ${permissionsXml}
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
         android:hardwareAccelerated="true"
-        android:usesCleartextTraffic="true">
+        android:usesCleartextTraffic="${allowCleartext}">
         
         <activity
             android:name="${activityName}"
@@ -81,6 +122,8 @@ ${permissionsXml}
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
+${metaDataXml}
         </activity>
     </application>
 </manifest>`

@@ -3,6 +3,8 @@
 // Two levels of validation:
 // 1. Config validation: Are all required fields present and valid?
 // 2. Project validation: Do referenced files actually exist on disk?
+//
+// v2.0: Expanded permissions dictionary to 50+ entries.
 
 import { access } from 'node:fs/promises'
 import { resolve } from 'node:path'
@@ -17,30 +19,94 @@ import type { NitronConfig, ValidationResult } from './types.js'
  */
 const PACKAGE_ID_REGEX = /^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*){2,}$/
 
-/** Known valid Android permissions */
+/**
+ * Known valid Android permissions.
+ * v2.0: Expanded to cover modern Android permissions (API 21–34+).
+ */
 const KNOWN_PERMISSIONS = new Set([
+  // ─── Network ──────────────────────────────────
   'INTERNET',
-  'CAMERA',
-  'READ_EXTERNAL_STORAGE',
-  'WRITE_EXTERNAL_STORAGE',
+  'ACCESS_NETWORK_STATE',
+  'ACCESS_WIFI_STATE',
+  'CHANGE_WIFI_STATE',
+  'CHANGE_NETWORK_STATE',
+  'NEARBY_WIFI_DEVICES',         // Android 13+
+
+  // ─── Location ─────────────────────────────────
   'ACCESS_FINE_LOCATION',
   'ACCESS_COARSE_LOCATION',
+  'ACCESS_BACKGROUND_LOCATION',  // Android 10+
+
+  // ─── Camera & Media ───────────────────────────
+  'CAMERA',
   'RECORD_AUDIO',
-  'VIBRATE',
-  'WAKE_LOCK',
-  'ACCESS_NETWORK_STATE',
-  'BLUETOOTH',
-  'BLUETOOTH_ADMIN',
-  'NFC',
+  'READ_MEDIA_IMAGES',           // Android 13+
+  'READ_MEDIA_VIDEO',            // Android 13+
+  'READ_MEDIA_AUDIO',            // Android 13+
+  'READ_MEDIA_VISUAL_USER_SELECTED', // Android 14+
+
+  // ─── Storage (legacy) ─────────────────────────
+  'READ_EXTERNAL_STORAGE',
+  'WRITE_EXTERNAL_STORAGE',
+  'MANAGE_EXTERNAL_STORAGE',     // Android 11+
+
+  // ─── Contacts & Calendar ──────────────────────
   'READ_CONTACTS',
   'WRITE_CONTACTS',
+  'GET_ACCOUNTS',
   'READ_CALENDAR',
   'WRITE_CALENDAR',
+
+  // ─── Phone & SMS ──────────────────────────────
   'CALL_PHONE',
+  'READ_PHONE_STATE',
+  'READ_PHONE_NUMBERS',          // Android 8+
   'SEND_SMS',
   'RECEIVE_SMS',
-  'READ_PHONE_STATE',
+  'READ_SMS',
+  'RECEIVE_MMS',
+  'RECEIVE_WAP_PUSH',
+  'ANSWER_PHONE_CALLS',          // Android 8+
+
+  // ─── Bluetooth ────────────────────────────────
+  'BLUETOOTH',
+  'BLUETOOTH_ADMIN',
+  'BLUETOOTH_CONNECT',           // Android 12+
+  'BLUETOOTH_SCAN',              // Android 12+
+  'BLUETOOTH_ADVERTISE',         // Android 12+
+
+  // ─── Sensors & Activity ───────────────────────
+  'BODY_SENSORS',
+  'BODY_SENSORS_BACKGROUND',     // Android 13+
+  'ACTIVITY_RECOGNITION',        // Android 10+
+  'HIGH_SAMPLING_RATE_SENSORS',
+
+  // ─── Notifications ────────────────────────────
+  'POST_NOTIFICATIONS',          // Android 13+
+
+  // ─── Biometrics & Security ────────────────────
+  'USE_BIOMETRIC',
+  'USE_FINGERPRINT',
+
+  // ─── System ───────────────────────────────────
+  'VIBRATE',
+  'WAKE_LOCK',
+  'RECEIVE_BOOT_COMPLETED',
+  'FOREGROUND_SERVICE',
+  'FOREGROUND_SERVICE_LOCATION',
+  'FOREGROUND_SERVICE_CAMERA',
+  'FOREGROUND_SERVICE_MICROPHONE',
+  'FOREGROUND_SERVICE_DATA_SYNC',
+  'FOREGROUND_SERVICE_MEDIA_PLAYBACK',
+  'FOREGROUND_SERVICE_CONNECTED_DEVICE',
+  'REQUEST_IGNORE_BATTERY_OPTIMIZATIONS',
+  'SCHEDULE_EXACT_ALARM',
+  'USE_EXACT_ALARM',             // Android 13+
+  'REQUEST_INSTALL_PACKAGES',
+  'SYSTEM_ALERT_WINDOW',
+  'NFC',
   'FLASHLIGHT',
+  'SET_ALARM',
 ])
 
 const VALID_ORIENTATIONS = ['portrait', 'landscape', 'auto'] as const
@@ -84,6 +150,13 @@ export function validateConfig(config: NitronConfig): ValidationResult {
         `Unknown permission: "${perm}" — this may not be a valid Android permission`
       )
     }
+  }
+
+  // --- WebView config warnings ---
+  if (config.webview?.backButton && !['history', 'exit'].includes(config.webview.backButton)) {
+    warnings.push(
+      `Invalid webview.backButton: "${config.webview.backButton}" — must be "history" or "exit", defaulting to "history"`
+    )
   }
 
   return { valid: errors.length === 0, errors, warnings }
