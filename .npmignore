@@ -1,16 +1,20 @@
-scripts/
-*.bat
-tsup.config.ts
-tsconfig.json
+# Source code and config (compiled to dist/)
 src/
-browser/
+tsconfig.json
+tsup.config.ts
 
-# Test applications
-test-app/
-my-final-test/
-real-zero-test/
-v12-test/
-nitron-test-app/
-test-icon/
-test-extract/
-real apk app for test/
+# Development & Test files
+test-backend/
+tests/
+.template-build/
+template-src/
+scripts/
+
+# Git and CI
+.github/
+.git/
+.gitignore
+
+# Misc
+*.log
+docs/
