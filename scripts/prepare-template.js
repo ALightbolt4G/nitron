@@ -139,8 +139,13 @@
 
   // Step 3: Convert .class → classes.dex using d8
   console.log('Converting to DEX...')
-  const classFile = join(BUILD_DIR, 'com', 'nicron', 'webview', 'MainActivity.class')
-  execSync(`d8 --lib "${androidJarPath}" --output "${BUILD_DIR}" "${classFile}"`, {
+  const classDir = join(BUILD_DIR, 'com', 'nicron', 'webview')
+  const { readdirSync } = await import('node:fs')
+  const classFiles = readdirSync(classDir)
+    .filter(f => f.endsWith('.class'))
+    .map(f => `"${join(classDir, f)}"`)
+    .join(' ')
+  execSync(`d8 --lib "${androidJarPath}" --output "${BUILD_DIR}" ${classFiles}`, {
     stdio: 'inherit'
   })
   console.log('✓ Generated classes.dex')

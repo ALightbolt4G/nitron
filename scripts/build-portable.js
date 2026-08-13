@@ -71,8 +71,13 @@ async function downloadFile(url, dest) {
     execSync(`java -jar "${ecjPath}" -source 1.8 -target 1.8 -cp "${androidJarPath}" -d "${BUILD_DIR}" "${JAVA_FILE}"`, { stdio: 'inherit' })
     
     console.log('Converting to DEX with D8...')
-    const classFile = join(BUILD_DIR, 'com', 'nicron', 'webview', 'MainActivity.class')
-    execSync(`java -cp "${r8Path}" com.android.tools.r8.D8 --lib "${androidJarPath}" --output "${BUILD_DIR}" "${classFile}"`, { stdio: 'inherit' })
+    const classDir = join(BUILD_DIR, 'com', 'nicron', 'webview')
+    const { readdirSync } = await import('node:fs')
+    const classFiles = readdirSync(classDir)
+      .filter(f => f.endsWith('.class'))
+      .map(f => `"${join(classDir, f)}"`)
+      .join(' ')
+    execSync(`java -cp "${r8Path}" com.android.tools.r8.D8 --lib "${androidJarPath}" --output "${BUILD_DIR}" ${classFiles}`, { stdio: 'inherit' })
 
     console.log('Packaging base.apk...')
     const JSZip = (await import('jszip')).default
