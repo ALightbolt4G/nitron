@@ -10,8 +10,12 @@ import sharp from 'sharp';
 import type { NitronConfig } from './types.js';
 import { generateManifestXml } from './manifest.js';
 
-const execFileAsync = promisify(execFile);
+import { fileURLToPath } from 'node:url';
 
+const execFileAsync = promisify(execFile);
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const NITRON_ROOT = resolve(__dirname, '..');
 // ─── Configuration ────────────────────────────────────────────────────────
 const AAPT2_VERSION = '9.2.0-15009934';
 
@@ -182,16 +186,16 @@ export async function buildResources(
           .toFile(join(destDir, 'ic_launcher_foreground.png'));
       }
     } else {
-      console.warn('[WARNING] No icon specified in config. Using default transparent icon.');
-      // Generate a 1x1 transparent default icon dynamically to avoid bundling binary files
-      const transparentPixel = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==', 'base64');
+      console.warn('[WARNING] No icon specified in config. Using Nitron default icon.');
+      const defaultIconPath = join(NITRON_ROOT, 'assets', 'default-icon.png');
+      const defaultIconData = await readFile(defaultIconPath);
       
       for (const { dpi, size } of mipmaps) {
         const destDir = join(resDir, `mipmap-${dpi}`);
-        await sharp(transparentPixel)
+        await sharp(defaultIconData)
           .resize(size, size, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
           .toFile(join(destDir, 'ic_launcher.png'));
-        await sharp(transparentPixel)
+        await sharp(defaultIconData)
           .resize(size, size, { fit: 'contain', background: { r: 255, g: 255, b: 255, alpha: 0 } })
           .toFile(join(destDir, 'ic_launcher_foreground.png'));
       }
