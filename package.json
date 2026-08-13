@@ -32,7 +32,8 @@
   "files": [
     "dist",
     "template",
-    "vendor"
+    "vendor",
+    "assets"
   ],
   "scripts": {
     "build": "tsup",
