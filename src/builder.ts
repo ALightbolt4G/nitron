@@ -12,9 +12,9 @@ import { dirname } from 'node:path'
 
 import { unpackTemplate } from './unpacker.js'
 import { injectAssets } from './injector.js'
-// Removing manifest.ts import since aapt2 generates it now
 import { packApk } from './packer.js'
-import { signApk } from './signer.js'
+import { packAab } from './aab-packer.js'
+import { signApk, signAab } from './signer.js'
 import { logger } from './logger.js'
 import type { NitronConfig, BuildOptions, BuildResult } from './types.js'
 import { writeFile } from 'node:fs/promises'
@@ -80,32 +80,40 @@ export async function build(config: NitronConfig, options: BuildOptions): Promis
     logger.success(`Injected ${fileCount} files`)
 
     // ─── Step 3: Build Android Resources (aapt2) ────────────
-    logger.step(3, BUILD_STEPS, 'Processing app icon & resources (aapt2)...')
-    await buildResources(config, options.projectDir, buildDir)
-
-    // AndroidManifest.xml is now generated and injected by aapt2-resource-builder!
+    const isAab = options.target === 'aab'
+    logger.step(3, BUILD_STEPS, `Processing app icon & resources (aapt2)... [${isAab ? 'AAB' : 'APK'}]`)
+    await buildResources(config, options.projectDir, buildDir, isAab)
 
     if (options.debug) {
       logger.info(`Android resources successfully compiled and linked.`)
     }
 
-    // ─── Step 4: Pack APK ───────────────────────────────────
-    logger.step(5, BUILD_STEPS, 'Packing APK...')
-    const unsignedPath = join(options.outputDir, 'unsigned.apk')
-    await packApk(buildDir, unsignedPath)
+    // ─── Step 4: Pack ───────────────────────────────────
+    logger.step(5, BUILD_STEPS, isAab ? 'Packing AAB...' : 'Packing APK...')
+    const unsignedPath = join(options.outputDir, isAab ? 'unsigned.aab' : 'unsigned.apk')
+    
+    if (isAab) {
+      await packAab(buildDir, unsignedPath)
+    } else {
+      await packApk(buildDir, unsignedPath)
+    }
 
-    // ─── Step 5: Sign APK ───────────────────────────────────
-    logger.step(6, BUILD_STEPS, 'Signing APK...')
+    // ─── Step 5: Sign ───────────────────────────────────
+    logger.step(6, BUILD_STEPS, isAab ? 'Signing AAB...' : 'Signing APK...')
     const signedDir = join(options.outputDir, '.signing-temp')
-    const signedApkPath = await signApk(unsignedPath, signedDir, {
-      release: options.release,
-      projectDir: options.projectDir
-    })
+    
+    let signedPath: string;
+    if (isAab) {
+      signedPath = await signAab(unsignedPath, signedDir, { release: options.release, projectDir: options.projectDir })
+    } else {
+      signedPath = await signApk(unsignedPath, signedDir, { release: options.release, projectDir: options.projectDir })
+    }
 
     // ─── Step 6: Move to final output ───────────────────────
     logger.step(7, BUILD_STEPS, 'Finalizing...')
-    const finalPath = join(options.outputDir, 'app.apk')
-    await copyFile(signedApkPath, finalPath)
+    const finalName = isAab ? 'app.aab' : 'app.apk'
+    const finalPath = join(options.outputDir, finalName)
+    await copyFile(signedPath, finalPath)
 
     // ─── Step 7: Get file size & Breakdown ──────────────────
     logger.step(8, BUILD_STEPS, 'Verifying output...')

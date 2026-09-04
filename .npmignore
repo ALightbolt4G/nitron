@@ -5,6 +5,7 @@ tsup.config.ts
 
 # Development & Test files
 test-backend/
+test-app/
 tests/
 .template-build/
 template-src/

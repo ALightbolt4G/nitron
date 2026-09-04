@@ -18,6 +18,7 @@
 
 package com.nicron.webview;
 
+import android.Manifest;
 import android.app.Activity;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -31,6 +32,8 @@ import android.view.WindowManager;
 import android.webkit.CookieManager;
 import android.webkit.MimeTypeMap;
 import android.webkit.WebChromeClient;
+import android.webkit.PermissionRequest;
+import android.webkit.GeolocationPermissions;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
@@ -45,6 +48,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.content.Context;
+import android.content.Intent;
+import android.webkit.JavascriptInterface;
 
 public class MainActivity extends Activity {
 
@@ -136,8 +146,34 @@ public class MainActivity extends Activity {
         // Set up the asset-serving WebViewClient
         webView.setWebViewClient(new NitronWebViewClient());
 
-        // Set up WebChromeClient for console messages and progress
-        webView.setWebChromeClient(new WebChromeClient());
+        // Setup WebChromeClient to allow WebView permission requests securely
+        webView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onPermissionRequest(final PermissionRequest request) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (request.getOrigin() != null && request.getOrigin().toString().startsWith("https://" + ASSET_HOST)) {
+                            request.grant(request.getResources());
+                        } else {
+                            request.deny();
+                        }
+                    }
+                });
+            }
+
+            @Override
+            public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
+                if (origin != null && origin.startsWith("https://" + ASSET_HOST)) {
+                    callback.invoke(origin, true, false);
+                } else {
+                    callback.invoke(origin, false, false);
+                }
+            }
+        });
+
+        // Setup JS bridge
+        webView.addJavascriptInterface(new NitronJSInterface(), "Nitron");
     }
 
     /**
@@ -378,5 +414,118 @@ public class MainActivity extends Activity {
             mimeType.equals("image/svg+xml") ||
             mimeType.equals("application/wasm")
         );
+    }
+
+    /**
+     * JavaScript Interface to expose Native features to the WebView.
+     */
+    private class NitronJSInterface {
+        @JavascriptInterface
+        public void showNotification(String title, String message) {
+            NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            String channelId = "nitron_default_channel";
+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                NotificationChannel channel = new NotificationChannel(
+                        channelId,
+                        "Default Notifications",
+                        NotificationManager.IMPORTANCE_DEFAULT
+                );
+                notificationManager.createNotificationChannel(channel);
+            }
+
+            Intent intent = new Intent(MainActivity.this, MainActivity.class);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            
+            PendingIntent pendingIntent;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                pendingIntent = PendingIntent.getActivity(MainActivity.this, 0, intent, PendingIntent.FLAG_IMMUTABLE);
+            } else {
+                pendingIntent = PendingIntent.getActivity(MainActivity.this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            }
+
+            Notification.Builder builder;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                builder = new Notification.Builder(MainActivity.this, channelId);
+            } else {
+                builder = new Notification.Builder(MainActivity.this);
+            }
+
+            int iconResId = getApplicationInfo().icon;
+            
+            builder.setSmallIcon(iconResId)
+                   .setContentTitle(title)
+                   .setContentText(message)
+                   .setAutoCancel(true)
+                   .setContentIntent(pendingIntent);
+
+            notificationManager.notify((int) System.currentTimeMillis(), builder.build());
+        }
+
+        private boolean isSafeOrigin() {
+            String url = webView.getUrl();
+            return url != null && url.startsWith("https://" + ASSET_HOST);
+        }
+
+        @JavascriptInterface
+        public void requestLocationPermission() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (!isSafeOrigin()) return;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        if (checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                            MainActivity.this.requestPermissions(new String[]{
+                                Manifest.permission.ACCESS_FINE_LOCATION,
+                                Manifest.permission.ACCESS_COARSE_LOCATION
+                            }, 101);
+                        }
+                    }
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void requestCameraPermission() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (!isSafeOrigin()) return;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        if (checkSelfPermission(Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+                            MainActivity.this.requestPermissions(new String[]{
+                                Manifest.permission.CAMERA,
+                                Manifest.permission.RECORD_AUDIO
+                            }, 102);
+                        }
+                    }
+                }
+            });
+        }
+
+        @JavascriptInterface
+        public void requestStoragePermission() {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if (!isSafeOrigin()) return;
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                        if (checkSelfPermission(Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
+                            MainActivity.this.requestPermissions(new String[]{
+                                Manifest.permission.READ_MEDIA_IMAGES,
+                                Manifest.permission.READ_MEDIA_VIDEO
+                            }, 103);
+                        }
+                    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                        if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                            MainActivity.this.requestPermissions(new String[]{
+                                Manifest.permission.READ_EXTERNAL_STORAGE,
+                                Manifest.permission.WRITE_EXTERNAL_STORAGE
+                            }, 103);
+                        }
+                    }
+                }
+            });
+        }
     }
 }

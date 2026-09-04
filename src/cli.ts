@@ -25,7 +25,7 @@ program
   .description('Build APK or PWA from the current project')
   .option('--debug', 'Enable verbose debug output', false)
   .option('--release', 'Sign APK with release keystore for Google Play', false)
-  .option('-t, --target <target>', 'Target output: android, pwa, or all', 'android')
+  .option('-t, --target <target>', 'Target output: android, aab, pwa, or all', 'android')
   .option('-p, --project <dir>', 'Project directory to build', process.cwd())
   .action(async (options: { debug: boolean, target: string, release: boolean, project: string }) => {
     const projectDir = resolve(options.project)
@@ -102,13 +102,14 @@ program
       logger.blank()
     }
 
-    if (target === 'android' || target === 'all') {
-      logger.info('Building Android target...')
+    if (target === 'android' || target === 'aab' || target === 'all') {
+      logger.info(target === 'aab' ? 'Building AAB target...' : 'Building Android target...')
       const result = await build(config, {
         projectDir,
         outputDir: resolve(projectDir, 'dist'),
         debug: options.debug,
-        release: options.release
+        release: options.release,
+        target: target
       })
 
       if (!result.success) {

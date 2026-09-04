@@ -1,5 +1,5 @@
-  #!/usr/bin/env node
-  // prepare-template.js — Build the base.apk template from source
+#!/usr/bin/env node
+// prepare-template.js — Build the base.apk template from source
   //
   // This script compiles the WebView activity into classes.dex and packages
   // it as the base APK template that Nitron ships with.

@@ -1,6 +1,6 @@
 <p align="center">
   <img src="assets/default-icon.png" width="120" height="120" alt="Nitron Logo" />
-  <h1 align="center">⚡ Nitron v2.0</h1>
+  <h1 align="center">⚡ Nitron v2.1.0</h1>
   <p align="center">
     <strong>Convert HTML/CSS/JS into a real Android APK — with zero Android SDK knowledge.</strong>
   </p>
@@ -15,15 +15,15 @@
 
 ---
 
-## 🚀 What's New in v2.0.1 (Official Web-First Runtime Release)
+## 🚀 What's New in v2.1.0
 
-Nitron v2.0 has been officially approved and fully rewritten from the ground up. We stopped fighting Android and started tricking it.
-
+- **AAB Support for Google Play**: You can now build Android App Bundles (`.aab`) by running `npx nitron build --target aab` (Note: requires a full JDK to sign the AAB).
+- **Native Push Notifications**: Trigger real Android notifications directly from your web code using `window.Nitron.showNotification('Title', 'Message')` *(Note: requires a full JDK to be installed to compile the native interface)*.
 - **Secure HTTPS Local Origin (`appassets.androidplatform.net`)**: We completely removed the deprecated `file://` protocol. Your local web files are now served securely via a custom `shouldInterceptRequest` handler.
 - **Zero CORS Issues**: Absolute paths (`/assets/image.png`), `fetch()` requests to external HTTPS APIs, Cookies, and `localStorage` work flawlessly just like they do on a real browser.
 - **Micro-Architecture**: The entire Android runtime overhead is exactly **9.6 KB** (`classes.dex`). No bloated WebView frameworks.
 - **New Configuration System (`nitron.config.json`)**: Configure Nitron using a pure JSON file. Supports splash screen colors, hardware back-button logic, and cleartext traffic control.
-- **Dynamic Icons**: Don't have an app icon? Nitron v2.0 automatically provides a sleek glowing neutron default icon at all DPI sizes!
+- **Dynamic Icons**: Don't have an app icon? Nitron automatically provides a sleek glowing neutron default icon at all DPI sizes!
 - **Framework Presets**: Added the `--preset` flag to `nitron init` to scaffold configurations for `nextjs`, `vite`, `react`, and `vanilla`.
 
 ---
@@ -185,9 +185,22 @@ The result? An APK built in under **3 seconds** using standard Node.js scripts.
 
 - **Node.js** 18 or later
 - **npm** (comes with Node.js)
-- **Java Runtime Environment (JRE)** 8+ (for APK signing only — auto-detected)
+- **Java Runtime Environment (JRE)** 8+ (for building standard `.apk` files)
+- **Java Development Kit (JDK)** 8+ (ONLY if you want to build advanced `.aab` files for Google Play)
 
-That's it. No Android SDK, no Android Studio, no Gradle.
+That's it. Building an APK requires zero Android SDK, zero Android Studio, and zero Gradle.
+
+---
+
+## 🏗️ Contributing & Nitron Development Environment
+
+If you want to contribute to Nitron or modify its core Java template (e.g., adding more Native APIs or customizing the Push Notifications logic), you must set up the full Nitron Development Environment:
+
+1. Install a full **Java Development Kit (JDK)** 17 or later.
+2. Modify the Java code in `template-src/`.
+3. Run `node scripts/prepare-template.js` to compile your custom `MainActivity.java` and package it into the `template/base.apk`.
+
+*(Note: Regular users just building web apps into APKs do **not** need to do this. They receive the template pre-compiled with Push Notifications support out-of-the-box!)*
 
 ---
 

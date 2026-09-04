@@ -124,7 +124,8 @@ export interface BuildResourcesResult {
 export async function buildResources(
   config: NitronConfig,
   projectDir: string,
-  targetBuildDir: string
+  targetBuildDir: string,
+  isAab: boolean = false
 ): Promise<BuildResourcesResult> {
   const buildId = `nitron-res-${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const workDir = join(tmpdir(), buildId);
@@ -234,14 +235,19 @@ export async function buildResources(
     const resourcesApk = join(workDir, 'resources.apk');
     const emitIdsPath = join(workDir, 'R.txt');
     
+    const linkArgs = [
+      'link',
+      compiledZip,
+      '--manifest', manifestPath,
+      '-I', androidJar,
+      '-o', resourcesApk
+    ];
+    if (isAab) {
+      linkArgs.push('--proto-format');
+    }
+    
     try {
-      await execFileAsync(aapt2, [
-        'link',
-        compiledZip,
-        '--manifest', manifestPath,
-        '-I', androidJar,
-        '-o', resourcesApk
-      ], { maxBuffer: 10 * 1024 * 1024 });
+      await execFileAsync(aapt2, linkArgs, { maxBuffer: 10 * 1024 * 1024 });
     } catch (err: any) {
       throw new Error(`[CRITICAL] aapt2 link failed:\n${err.stderr || err.message}`);
     }
@@ -252,7 +258,7 @@ export async function buildResources(
     
     for (const entry of apkZip.getEntries()) {
       if (!entry.isDirectory) {
-        if (entry.entryName === 'resources.arsc' || entry.entryName === 'AndroidManifest.xml') {
+        if (entry.entryName === 'resources.arsc' || entry.entryName === 'resources.pb' || entry.entryName === 'AndroidManifest.xml') {
           apkZip.extractEntryTo(entry, targetBuildDir, false, true);
         } else if (entry.entryName.startsWith('res/')) {
           // Extract into targetBuildDir/res/ keeping internal directory structure

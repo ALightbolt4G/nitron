@@ -183,3 +183,108 @@ export async function signApk(unsignedApkPath: string, outputDir: string, option
     )
   }
 }
+
+/**
+ * Check if jarsigner is available.
+ */
+export async function findJarsigner(): Promise<string> {
+  const javaHomeRaw = process.env.JAVA_HOME
+  if (javaHomeRaw) {
+    const javaHome = javaHomeRaw.trim()
+    const ext = process.platform === 'win32' ? '.exe' : ''
+    const jarsignerBin = join(javaHome, 'bin', `jarsigner${ext}`)
+    try {
+      await execFileAsync(jarsignerBin, ['-help'])
+      return jarsignerBin
+    } catch (err) {
+      // Fall through
+    }
+  }
+
+  try {
+    await execFileAsync('jarsigner', ['-help'])
+    return 'jarsigner'
+  } catch {
+    throw new Error(
+      'jarsigner not found — Nitron needs the Java JDK to sign AAB files.\n' +
+      '  Install the full JDK from: https://adoptium.net/\n' +
+      '  Or set JAVA_HOME to your JDK installation.'
+    )
+  }
+}
+
+/**
+ * Sign an AAB file using jarsigner.
+ */
+export async function signAab(unsignedAabPath: string, outputDir: string, options?: { release?: boolean, projectDir?: string }): Promise<string> {
+  const jarsigner = await findJarsigner()
+  
+  await mkdir(outputDir, { recursive: true })
+  const signedAab = join(outputDir, basename(unsignedAabPath).replace('.aab', '-signed.aab'))
+  
+  // We need to copy the unsigned AAB to the signed path first, because jarsigner modifies it in-place
+  const { copyFile } = await import('node:fs/promises')
+  await copyFile(unsignedAabPath, signedAab)
+
+  const args = [
+    '-sigalg', 'SHA256withRSA',
+    '-digestalg', 'SHA-256',
+  ]
+
+  let keystorePath: string;
+  let alias: string;
+  let passwordStr: string;
+
+  if (options?.release && options.projectDir) {
+    keystorePath = join(options.projectDir, 'nitron-release.keystore')
+    alias = 'release'
+    
+    try {
+      await access(keystorePath)
+    } catch {
+      throw new Error(
+        'Release keystore not found!\n' +
+        'Run "npx nitron keystore" to generate a release keystore before building with --release.'
+      )
+    }
+
+    const { password } = await prompts({
+      type: 'password',
+      name: 'password',
+      message: 'Enter release keystore password'
+    })
+
+    if (!password) {
+      throw new Error('Password is required for release signing.')
+    }
+    passwordStr = password as string;
+  } else {
+    // Debug keystore
+    keystorePath = join(homedir(), '.android', 'debug.keystore')
+    alias = 'androiddebugkey'
+    passwordStr = 'android'
+    
+    try {
+      await access(keystorePath)
+    } catch {
+      // If debug keystore doesn't exist, we should ideally generate it.
+      // For now, fail explicitly if it doesn't exist, as uber-apk-signer usually creates it.
+      throw new Error('Debug keystore not found. Please build an APK first or create ~/.android/debug.keystore')
+    }
+  }
+
+  args.push(
+    '-keystore', keystorePath,
+    '-storepass', passwordStr,
+    '-keypass', passwordStr,
+    signedAab,
+    alias
+  )
+
+  try {
+    await execFileAsync(jarsigner, args, { timeout: 60000 })
+    return signedAab
+  } catch (err: any) {
+    throw new Error(`AAB signing failed: ${err.message}`)
+  }
+}

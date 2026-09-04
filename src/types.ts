@@ -67,6 +67,8 @@ export interface BuildOptions {
   debug: boolean
   /** Build in release mode using nitron-release.keystore */
   release?: boolean
+  /** Target output: android, aab, pwa */
+  target?: string
 }
 
 /**
