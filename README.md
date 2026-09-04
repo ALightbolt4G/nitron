@@ -17,8 +17,14 @@
 
 ## 🚀 What's New in v2.1.0
 
+- **Google Play Protect Compliance**: Completely secured the WebView permissions architecture. Permission requests and geolocation prompts are now strictly validated against the internal secure origin (`https://appassets.androidplatform.net`). This eliminates arbitrary WebView permission grants and fully complies with the latest Google Play Protect safety standards!
+- **Native JavaScript-to-Android Interfaces**: We added native JS interfaces for critical device features:
+  - `window.Nitron.requestLocationPermission()`
+  - `window.Nitron.requestCameraPermission()`
+  - `window.Nitron.requestStoragePermission()`
+- **Dynamic Permission Handling**: Added robust `checkSelfPermission` mechanisms before initiating device access requests, preventing unnecessary native dialogs and ensuring a smoother user experience.
 - **AAB Support for Google Play**: You can now build Android App Bundles (`.aab`) by running `npx nitron build --target aab` (Note: requires a full JDK to sign the AAB).
-- **Native Push Notifications**: Trigger real Android notifications directly from your web code using `window.Nitron.showNotification('Title', 'Message')` *(Note: requires a full JDK to be installed to compile the native interface)*.
+- **Native Push Notifications**: Trigger real Android notifications directly from your web code using `window.Nitron.showNotification('Title', 'Message')`.
 - **Secure HTTPS Local Origin (`appassets.androidplatform.net`)**: We completely removed the deprecated `file://` protocol. Your local web files are now served securely via a custom `shouldInterceptRequest` handler.
 - **Zero CORS Issues**: Absolute paths (`/assets/image.png`), `fetch()` requests to external HTTPS APIs, Cookies, and `localStorage` work flawlessly just like they do on a real browser.
 - **Micro-Architecture**: The entire Android runtime overhead is exactly **9.6 KB** (`classes.dex`). No bloated WebView frameworks.
