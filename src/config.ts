@@ -24,6 +24,7 @@ const DEFAULTS: Omit<NitronConfig, 'name' | 'packageId'> = {
   orientation: 'portrait',
   statusBar: true,
   permissions: [],
+  exclude: [],
   icon: null,
   network: { cleartext: false },
   splashScreen: null,
@@ -45,6 +46,7 @@ function mergeWithDefaults(partial: Record<string, any>): NitronConfig {
     orientation: partial.orientation ?? DEFAULTS.orientation,
     statusBar: partial.statusBar ?? DEFAULTS.statusBar,
     permissions: partial.permissions ?? DEFAULTS.permissions,
+    exclude: partial.exclude ?? DEFAULTS.exclude,
     icon: partial.icon ?? DEFAULTS.icon,
     network: {
       cleartext: partial.network?.cleartext ?? DEFAULTS.network!.cleartext,
