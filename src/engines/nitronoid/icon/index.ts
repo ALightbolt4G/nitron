@@ -13,7 +13,8 @@
 
 import { join } from 'node:path'
 import { stat } from 'node:fs/promises'
-import type { IconConfig } from '../types.js'
+import type { NitronConfig } from '../../../types.js'
+type IconConfig = NonNullable<NitronConfig['icon']>
 import type { ResolvedIconConfig } from './types.js'
 import { resizeIcons, type ResizeStats } from './resizer.js'
 import { generateAdaptiveIcon } from './adaptive.js'

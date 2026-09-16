@@ -27,3 +27,11 @@ test-backend/
 local-jdk/
 template-build/
 *.tgz
+
+# iOS build artifacts
+.toolchain-build/
+toolchain/
+.zsign_cache/
+.shell-build/
+.shell-build-sim/
+

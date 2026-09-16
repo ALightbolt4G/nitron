@@ -14,7 +14,7 @@
 
 import { readdir, copyFile, mkdir, readFile, writeFile, access } from 'node:fs/promises'
 import { join, dirname, basename } from 'node:path'
-import type { NitronConfig } from './types.js'
+import type { NitronConfig } from '../../types.js'
 
 /** Files and directories to exclude from injection */
 const EXCLUDED = new Set([

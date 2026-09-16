@@ -53,6 +53,25 @@ export interface NitronConfig {
     /** Back button behavior: 'history' navigates back, 'exit' closes app (default: 'history') */
     backButton?: 'history' | 'exit'
   }
+
+  /**
+   * iOS-specific overrides. All fields optional — Nitron falls back to the
+   * shared fields above (packageId, permissions, etc.) whenever possible,
+   * since Android package IDs and iOS bundle IDs share the same
+   * reverse-DNS format.
+   */
+  ios?: {
+    /** iOS bundle identifier (e.g. com.myname.myapp). Falls back to `packageId` if omitted. */
+    bundleId?: string
+    /** Minimum supported iOS version (default: "13.0") */
+    minimumVersion?: string
+    /**
+     * Human-readable usage descriptions shown to the user in the iOS
+     * permission dialog, keyed by the shared permission name (e.g. "CAMERA").
+     * If omitted, Nitron generates a generic default description.
+     */
+    permissionDescriptions?: Record<string, string>
+  }
 }
 
 /**

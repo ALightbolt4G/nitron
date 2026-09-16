@@ -57,7 +57,7 @@ export async function initProject(name?: string, presetName?: string) {
     },
     // Prompt for preset if not provided via CLI
     ...(presetName ? [] : [{
-      type: 'select',
+      type: 'select' as const,
       name: 'selectedPreset',
       message: 'Select a web framework preset:',
       choices: Object.entries(PRESETS).map(([id, preset]) => ({

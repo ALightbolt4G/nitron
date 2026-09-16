@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleDisplayName</key>
+	<string>__NITRON_APP_NAME__</string>
+	<key>CFBundleName</key>
+	<string>__NITRON_APP_NAME__</string>
+	<key>CFBundleIdentifier</key>
+	<string>__NITRON_BUNDLE_ID__</string>
+	<key>CFBundleShortVersionString</key>
+	<string>__NITRON_VERSION__</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>CFBundleExecutable</key>
+	<string>NitronShell</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>UILaunchStoryboardName</key>
+	<string></string>
+	<key>UIRequiresFullScreen</key>
+	<true/>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>__NITRON_ORIENTATION__</string>
+	</array>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+	</dict>
+	<!-- مفاتيح الصلاحيات (مثل NSCameraUsageDescription) تُضاف هنا فقط عند الحاجة إليها -->
+	<!-- __NITRON_PERMISSIONS_BLOCK__ -->
+</dict>
+</plist>

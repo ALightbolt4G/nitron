@@ -7,7 +7,7 @@ import { promisify } from 'node:util';
 import https from 'node:https';
 import AdmZip from 'adm-zip';
 import sharp from 'sharp';
-import type { NitronConfig } from './types.js';
+import type { NitronConfig } from '../../types.js';
 import { generateManifestXml } from './manifest.js';
 
 import { fileURLToPath } from 'node:url';

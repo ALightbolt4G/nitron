@@ -5,7 +5,7 @@ import { promisify } from 'node:util'
 import { readFile, writeFile, appendFile, access } from 'node:fs/promises'
 import prompts from 'prompts'
 import pc from 'picocolors'
-import { logger } from './logger.js'
+import { logger } from '../../logger.js'
 import { findKeytool } from './signer.js'
 
 const execFileAsync = promisify(execFile)

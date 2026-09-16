@@ -1,8 +1,8 @@
 <p align="center">
   <img src="assets/default-icon.png" width="120" height="120" alt="Nitron Logo" />
-  <h1 align="center">⚡ Nitron v2.1.0</h1>
+  <h1 align="center">⚡ Nitron v3.0.0</h1>
   <p align="center">
-    <strong>Convert HTML/CSS/JS into a real Android APK — with zero Android SDK knowledge.</strong>
+    <strong>Convert HTML/CSS/JS into real Android & iOS apps — with zero platform SDK knowledge.</strong>
   </p>
   <p align="center">
     <a href="#quick-start">Quick Start</a> •
@@ -14,6 +14,15 @@
 </p>
 
 ---
+
+## 🚀 What's New in v3.0.0
+
+- **iOS support (new engine: `initron`)**: Nitron now builds real iOS apps from the exact same `nitron.config.json`, using a WKWebView shell instead of Android's WebView. No Xcode is required — not even for the one-time shell build (see [`ARCHITECTURE.md`](ARCHITECTURE.md) §5–6 for the full breakdown of how).
+  - `nitron build --target ios-simulator` — produces an **unsigned** `.app`, ready to test in the iOS Simulator. No Apple Developer account needed at all, since the Simulator doesn't require code signing.
+  - `nitron build --target ios` — produces a signed `.ipa` for a real device, using [zsign](https://github.com/zhlynn/zsign)/[ldid](https://github.com/ProcursusTeam/ldid) instead of Xcode's `codesign`. Requires an Apple Developer certificate — read from `NITRON_IOS_P12_PATH`, `NITRON_IOS_P12_PASSWORD`, `NITRON_IOS_PROVISION_PATH`.
+  - **One-time setup required**: run `scripts/build-ios-toolchain.sh` + `scripts/build-shell-device.sh` once (or trigger `.github/workflows/build-shell-device.yml`, a plain Linux runner — no macOS anywhere in that path). Full details, every file, every design decision: **[`ARCHITECTURE.md`](ARCHITECTURE.md)**.
+- **Internal restructuring**: the codebase is now split into two isolated engines — `src/engines/nitronoid/` (Android, unchanged logic) and `src/engines/initron/` (iOS, new) — sharing only a small platform-agnostic core. See `ARCHITECTURE.md` §2–4 for the full file-by-file map.
+- **Validated end-to-end**: the full Linux → `.ipa` pipeline has been run for real (on Windows/WSL2), producing a genuine `Mach-O arm64` binary, correct `Payload/App.app/...` structure, and an `.ipa` accepted by a real third-party iOS package validator (BrowserStack App Live). See [`ARCHITECTURE.md`](ARCHITECTURE.md) §10 for the exact issues hit and fixed along the way — useful reading if you hit something similar.
 
 ## 🚀 What's New in v2.1.0
 
@@ -187,6 +196,21 @@ The result? An APK built in under **3 seconds** using standard Node.js scripts.
 
 ---
 
+## 🍎 iOS Compatibility
+
+| iOS | Status |
+| --- | --- |
+| iOS 13+ | Supported (shell minimum deployment target) |
+
+**Setup required before your first iOS build:** see [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full walkthrough — in short: `scripts/build-ios-toolchain.sh` + `scripts/build-shell-device.sh` (or the equivalent GitHub Actions workflow) build the real-device shell entirely on Linux. No Mac needed for that path, ever. The Simulator target is the one remaining piece that still needs a one-time macOS step.
+
+| Target | Needs |
+| --- | --- |
+| `--target ios` (real device / TestFlight / App Store) | Nothing beyond a one-time Linux toolchain build. Apple Developer account + certificate only for a real (non-ad-hoc) signature. |
+| `--target ios-simulator` | A one-time macOS step (iPhoneSimulator SDK isn't available from the same Linux-friendly source as the device SDK). |
+
+---
+
 ## 🛠️ Requirements
 
 - **Node.js** 18 or later
@@ -194,7 +218,9 @@ The result? An APK built in under **3 seconds** using standard Node.js scripts.
 - **Java Runtime Environment (JRE)** 8+ (for building standard `.apk` files)
 - **Java Development Kit (JDK)** 8+ (ONLY if you want to build advanced `.aab` files for Google Play)
 
-That's it. Building an APK requires zero Android SDK, zero Android Studio, and zero Gradle.
+That's it for day-to-day `nitron build`. Building an APK requires zero Android SDK, zero Android Studio, and zero Gradle. Building an IPA requires zero Xcode and zero macOS.
+
+**One-time only**, to build the iOS shell yourself (§6 of [`ARCHITECTURE.md`](ARCHITECTURE.md)) on Linux or WSL2: `clang`, `llvm`, `lld`, `cmake`, `automake`, `autogen`, `libtool`, `libssl-dev`, `libxml2-dev`, `uuid-dev`, `pkg-config`, `git`, `xz-utils`, `zip`/`unzip`. `scripts/build-ios-toolchain.sh` installs all of these for you via `apt-get` — you don't need to install them by hand.
 
 ---
 

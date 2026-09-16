@@ -73,7 +73,7 @@ export const logger = {
   banner(): void {
     console.log()
     console.log(pc.bold(pc.cyan('  ⚡ Nitron')))
-    console.log(pc.dim('  HTML/CSS/JS → Android APK'))
+    console.log(pc.dim('  HTML/CSS/JS → Android & iOS apps'))
     console.log()
   },
 

@@ -1,0 +1,60 @@
+name: Build Nitron iOS Shell (Device — zero macOS)
+#
+# This is THE big v3.0.0 change: the real-device iOS shell is now built
+# entirely on a Linux runner. No Xcode, no macOS, anywhere in this workflow.
+#
+# It runs scripts/build-ios-toolchain.sh (clang cross-compiler + cctools-port
+# ld64/lipo/ldid + a community-mirrored iOS SDK) and scripts/build-shell-device.sh
+# (compiles template-src/shell/src/*.m directly), then uploads
+# template/shell/shell-device.zip — the same artifact path the old
+# macOS-based workflow used to produce, so nothing else in the pipeline
+# (src/engines/initron/build.ts) needs to change.
+#
+# The slow part (building apple-libtapi, which needs a slice of LLVM) is
+# cached across runs — only the first run on a given SDK version is slow.
+
+on:
+  workflow_dispatch:
+    inputs:
+      sdk_version:
+        description: 'iOS SDK version to build against (must exist in theos/sdks)'
+        default: '16.5'
+        required: false
+
+jobs:
+  build-device-shell:
+    runs-on: ubuntu-latest
+    env:
+      NITRON_IOS_SDK_VERSION: ${{ github.event.inputs.sdk_version || '16.5' }}
+      JOBS: 4
+    steps:
+      - uses: actions/checkout@v4
+
+      # The expensive artifact is apple-libtapi (needs to compile a slice
+      # of LLVM). Everything else in the toolchain builds in well under a
+      # minute, so caching just this is enough to make repeat runs fast.
+      - name: Cache apple-libtapi build
+        id: tapi-cache
+        uses: actions/cache@v4
+        with:
+          path: toolchain
+          key: nitron-ios-toolchain-${{ env.NITRON_IOS_SDK_VERSION }}-v1
+
+      - name: Build iOS cross-compilation toolchain
+        run: bash scripts/build-ios-toolchain.sh
+        # The script itself skips apple-libtapi if toolchain/lib/libtapi.*
+        # already exists (i.e. cache hit), so this is safe to always run.
+
+      - name: Compile the WKWebView shell
+        run: bash scripts/build-shell-device.sh
+
+      - name: Verify output
+        run: |
+          test -f template/shell/shell-device.zip
+          unzip -l template/shell/shell-device.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nitron-ios-shell-device
+          path: template/shell/shell-device.zip

@@ -1,0 +1,36 @@
+name: Build Nitron iOS Shell (Simulator only)
+#
+# v3.0.0 note: the REAL DEVICE shell no longer needs this workflow at all —
+# see scripts/build-ios-toolchain.sh + scripts/build-shell-device.sh, which
+# cross-compile it on plain Linux, zero macOS involved.
+#
+# The Simulator target is the one remaining piece that still needs a Mac:
+# the iOS Simulator runs against Apple's iPhoneSimulator SDK, which (unlike
+# the device SDK) is not mirrored by the theos/sdks community project, so
+# we don't have a Linux-obtainable copy of it. This workflow runs
+# scripts/build-shell-simulator.sh which compiles the exact same
+# template-src/shell/src/*.m files directly with clang against the Mac's
+# own installed SDK — no .xcodeproj, no xcodegen.
+
+on:
+  workflow_dispatch: {}   # manual only — this is a rare, one-time-ish step
+
+jobs:
+  build-simulator-shell:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Simulator Shell
+        run: bash scripts/build-shell-simulator.sh
+
+      - name: Verify output
+        run: |
+          test -f template/shell/shell-simulator.zip
+          unzip -l template/shell/shell-simulator.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nitron-ios-shell-simulator
+          path: template/shell/shell-simulator.zip

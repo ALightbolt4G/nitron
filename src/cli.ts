@@ -9,23 +9,24 @@ import { Command } from 'commander'
 import { resolve } from 'node:path'
 import { readConfig } from './config.js'
 import { validateConfig, validateProject } from './validator.js'
-import { build } from './builder.js'
+import { build } from './engines/nitronoid/build.js'
+import { build as buildIOS } from './engines/initron/build.js'
 import { logger } from './logger.js'
 
 const program = new Command()
 
 program
   .name('nitron')
-  .description('Convert HTML/CSS/JS into Android APK — zero Android knowledge required')
-  .version('2.0.0')
+  .description('Convert HTML/CSS/JS into Android and iOS apps — zero platform knowledge required')
+  .version('3.0.0')
 
 // ─── BUILD COMMAND ───────────────────────────────────────────────
 program
   .command('build')
-  .description('Build APK or PWA from the current project')
+  .description('Build APK, IPA, or PWA from the current project')
   .option('--debug', 'Enable verbose debug output', false)
   .option('--release', 'Sign APK with release keystore for Google Play', false)
-  .option('-t, --target <target>', 'Target output: android, aab, pwa, or all', 'android')
+  .option('-t, --target <target>', 'Target output: android, aab, ios, ios-simulator, pwa, or all', 'android')
   .option('-p, --project <dir>', 'Project directory to build', process.cwd())
   .action(async (options: { debug: boolean, target: string, release: boolean, project: string }) => {
     const projectDir = resolve(options.project)
@@ -78,7 +79,7 @@ program
     logger.config('Orientation', config.orientation)
     logger.config('Status Bar', config.statusBar ? 'visible' : 'hidden')
     logger.config('Permissions', config.permissions.length > 0 ? config.permissions.join(', ') : 'none')
-    logger.config('Icon', config.icon ?? 'default')
+    logger.config('Icon', typeof config.icon === 'string' ? config.icon : (config.icon ? (config.icon.src ?? 'default') : 'default'))
     logger.blank()
 
     if (options.debug) {
@@ -121,6 +122,33 @@ program
         process.exit(1)
       }
     }
+
+    if (target === 'ios' || target === 'ios-simulator' || target === 'all') {
+      const simulator = target === 'ios-simulator'
+      logger.info(simulator ? 'Building iOS Simulator target...' : 'Building iOS target...')
+      const iosResult = await buildIOS(config, {
+        projectDir,
+        outputDir: resolve(projectDir, 'dist'),
+        debug: options.debug,
+        // `all` should never require Apple credentials just to smoke-test
+        // alongside Android — fall back to the Simulator artifact in that case.
+        target: target === 'all' ? 'ios-simulator' : target,
+        simulator: target === 'all' ? true : simulator,
+      })
+
+      if (!iosResult.success) {
+        for (const e of iosResult.errors) {
+          logger.error(e)
+        }
+        logger.blank()
+        logger.error('iOS build failed.')
+        process.exit(1)
+      }
+
+      for (const w of iosResult.warnings) {
+        logger.warn(w)
+      }
+    }
   })
 
 // ─── KEYSTORE COMMAND (Phase 5) ──────────────────────────────────
@@ -128,7 +156,7 @@ program
   .command('keystore')
   .description('Generate a release keystore for signing your production APK')
   .action(async () => {
-    const { generateKeystore } = await import('./keystore.js')
+    const { generateKeystore } = await import('./engines/nitronoid/keystore.js')
     await generateKeystore(process.cwd())
   })
 

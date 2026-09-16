@@ -6,7 +6,7 @@
 
 import { join, relative } from 'node:path'
 import { mkdir, readdir, copyFile, readFile, writeFile, rm } from 'node:fs/promises'
-import { NitronConfig } from './config.js'
+import type { NitronConfig } from './types.js'
 import { logger } from './logger.js'
 
 const EXCLUDED = new Set([
