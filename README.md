@@ -125,6 +125,17 @@ Nitron is controlled via a simple `nitron.config.json` file. Here is a fully det
 - **`webview.backButton`**: Set to `"history"` to make the Android hardware back-button trigger browser back navigation.
 - **`network.cleartext`**: Set to `true` to allow HTTP traffic. Default is `false` (HTTPS only).
 
+### 🗑️ Asset Exclusion (New in v3.1.0)
+
+If you have files in your web project that shouldn't be packaged into your final app bundle (like `*.exe` tools, backend configurations, or secret files), you can exclude them using the `exclude` array. Nitron will completely ignore these files during the build, keeping your app ultra-lightweight.
+
+```json
+{
+  "exclude": ["*.exe", "my-backend-folder", "secret.config"]
+}
+```
+Glob patterns like `*.exe` and exact file or folder names are fully supported!
+
 ---
 
 <a name="web-first-runtime"></a>
