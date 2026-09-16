@@ -34,12 +34,25 @@ export async function buildPwa(projectDir: string, config: NitronConfig): Promis
   logger.step(1, 4, 'Copying web assets...')
   const copiedFiles: string[] = [] // Relative paths of copied files
 
+  const customExcludes = config.exclude || []
+  const excludeRegexes = customExcludes.map(pattern => {
+    let regexStr = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&')
+    regexStr = regexStr.replace(/\*/g, '.*').replace(/\?/g, '.')
+    return new RegExp(`^${regexStr}$`)
+  })
+
   async function copyRecursive(srcDir: string, destDir: string): Promise<void> {
     const entries = await readdir(srcDir, { withFileTypes: true })
     for (const entry of entries) {
       if (EXCLUDED.has(entry.name)) continue
       const srcPath = join(srcDir, entry.name)
       const destPath = join(destDir, entry.name)
+      
+      const relToProject = relative(projectDir, srcPath).replace(/\\/g, '/')
+      if (excludeRegexes.some(r => r.test(entry.name) || r.test(relToProject))) {
+        continue
+      }
+
       if (entry.isDirectory()) {
         await mkdir(destPath, { recursive: true })
         await copyRecursive(srcPath, destPath)

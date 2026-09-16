@@ -24,6 +24,9 @@ export interface NitronConfig {
   /** App icon configuration */
   icon: string | { src: string; background?: string; adaptive?: boolean } | null
 
+  /** List of files, directories, or glob patterns to exclude from the final app bundle */
+  exclude?: string[]
+
   /**
    * Network configuration.
    * By default, only HTTPS traffic is allowed.

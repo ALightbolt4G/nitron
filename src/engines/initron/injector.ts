@@ -7,7 +7,7 @@
 // facing behavior is identical across both platforms, by design.
 
 import { readdir, copyFile, mkdir, writeFile, access } from 'node:fs/promises'
-import { join, dirname, basename } from 'node:path'
+import { join, dirname, basename, relative } from 'node:path'
 import type { NitronConfig } from '../../types.js'
 
 const EXCLUDED = new Set([
@@ -53,6 +53,13 @@ export async function injectShellAssets(config: NitronConfig, projectDir: string
     sourceDir = projectDir
   }
 
+  const customExcludes = config.exclude || []
+  const excludeRegexes = customExcludes.map(pattern => {
+    let regexStr = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&')
+    regexStr = regexStr.replace(/\*/g, '.*').replace(/\?/g, '.')
+    return new RegExp(`^${regexStr}$`)
+  })
+
   await mkdir(wwwDir, { recursive: true })
 
   async function copyRecursive(srcDir: string, destDir: string): Promise<void> {
@@ -61,6 +68,12 @@ export async function injectShellAssets(config: NitronConfig, projectDir: string
       if (EXCLUDED.has(entry.name)) continue
       const srcPath = join(srcDir, entry.name)
       const destPath = join(destDir, entry.name)
+
+      const relPath = relative(sourceDir, srcPath).replace(/\\/g, '/')
+      if (excludeRegexes.some(r => r.test(entry.name) || r.test(relPath))) {
+        continue
+      }
+
       if (entry.isDirectory()) {
         await mkdir(destPath, { recursive: true })
         await copyRecursive(srcPath, destPath)

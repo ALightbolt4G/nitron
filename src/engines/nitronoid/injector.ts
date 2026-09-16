@@ -13,7 +13,7 @@
 // Excluded: app.js, nitron.config.json, package.json, node_modules/, dist/, .git/
 
 import { readdir, copyFile, mkdir, readFile, writeFile, access } from 'node:fs/promises'
-import { join, dirname, basename } from 'node:path'
+import { join, dirname, basename, relative } from 'node:path'
 import type { NitronConfig } from '../../types.js'
 
 /** Files and directories to exclude from injection */
@@ -71,6 +71,14 @@ export async function injectAssets(config: NitronConfig, projectDir: string, ass
     sourceDir = projectDir
   }
 
+  // Compile custom exclude patterns into regexes
+  const customExcludes = config.exclude || []
+  const excludeRegexes = customExcludes.map(pattern => {
+    let regexStr = pattern.replace(/[.+^${}()|[\]\\]/g, '\\$&')
+    regexStr = regexStr.replace(/\*/g, '.*').replace(/\?/g, '.')
+    return new RegExp(`^${regexStr}$`)
+  })
+
   // Ensure the target assets/www/ directory exists
   await mkdir(assetsDir, { recursive: true })
 
@@ -78,11 +86,17 @@ export async function injectAssets(config: NitronConfig, projectDir: string, ass
     const entries = await readdir(srcDir, { withFileTypes: true })
 
     for (const entry of entries) {
-      // Skip excluded files/directories
+      // Skip hardcoded excluded files/directories
       if (EXCLUDED.has(entry.name)) continue
 
       const srcPath = join(srcDir, entry.name)
       const destPath = join(destDir, entry.name)
+      const relPath = relative(sourceDir, srcPath).replace(/\\/g, '/')
+
+      // Skip custom excluded patterns
+      if (excludeRegexes.some(r => r.test(entry.name) || r.test(relPath))) {
+        continue
+      }
 
       if (entry.isDirectory()) {
         await mkdir(destPath, { recursive: true })

@@ -18,7 +18,7 @@ const program = new Command()
 program
   .name('nitron')
   .description('Convert HTML/CSS/JS into Android and iOS apps — zero platform knowledge required')
-  .version('3.0.0')
+  .version('3.1.0')
 
 // ─── BUILD COMMAND ───────────────────────────────────────────────
 program
