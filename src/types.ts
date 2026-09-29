@@ -75,6 +75,16 @@ export interface NitronConfig {
      */
     permissionDescriptions?: Record<string, string>
   }
+
+  /**
+   * Android-specific overrides.
+   */
+  android?: {
+    /** Target Android SDK version (default: 34) */
+    targetSdk?: number
+    /** Minimum Android SDK version (default: 21) */
+    minSdk?: number
+  }
 }
 
 /**

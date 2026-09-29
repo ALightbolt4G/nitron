@@ -94,7 +94,7 @@ program
       logger.info('Building PWA target...')
       const { buildPwa } = await import('./pwa.js')
       try {
-        const { outDir, filesCount } = await buildPwa(process.cwd(), config)
+        const { outDir, filesCount } = await buildPwa(projectDir, config)
         logger.success(`PWA built successfully → ${outDir} (${filesCount} files)`)
       } catch (err: any) {
         logger.error(`PWA build failed: ${err.message}`)

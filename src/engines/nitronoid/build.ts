@@ -159,8 +159,14 @@ export async function build(config: NitronConfig, options: BuildOptions): Promis
 
     if (options.release) {
       console.log('✓ Signed with release keystore')
-      console.log('✓ targetSdkVersion: 34')
-      console.log('✓ minSdkVersion: 21')
+      console.log(`✓ targetSdkVersion: ${config.android?.targetSdk ?? 34}`)
+      console.log(`✓ minSdkVersion: ${config.android?.minSdk ?? 21}`)
+      
+      const targetSdk = config.android?.targetSdk ?? 34
+      if (isAab && targetSdk < 36) {
+        console.log(`⚠ targetSdk is ${targetSdk}. Google Play Console requires targetSdk to be at least 36 for new AAB releases. Please update it in nitron.config.json or you will face an error.`)
+      }
+
       if (!config.icon || config.icon === 'default') {
         console.log('⚠ Icon not set — Google Play requires a 512x512 PNG icon')
       }

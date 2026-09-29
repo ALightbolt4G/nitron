@@ -90,12 +90,17 @@ export async function packAab(buildDir: string, outputPath: string): Promise<voi
   const { rm } = await import('node:fs/promises');
   await rm(outputPath, { force: true });
 
+  // Create an empty mapping file to satisfy Google Play's R8 warning
+  const mappingPath = join(buildDir, 'proguard.map');
+  await writeFile(mappingPath, '# compiler: R8\n');
+
   try {
     await execFileAsync(java, [
       '-jar', bundletoolJar,
       'build-bundle',
       '--modules', baseZipPath,
-      '--output', outputPath
+      '--output', outputPath,
+      '--metadata-file=com.android.tools.build.obfuscation/proguard.map:' + mappingPath
     ], { maxBuffer: 50 * 1024 * 1024 }); // 50MB max buffer
   } catch (err: any) {
     throw new Error(`bundletool failed: ${err.stderr || err.message}`);

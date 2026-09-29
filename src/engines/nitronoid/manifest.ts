@@ -95,13 +95,16 @@ export function generateManifestXml(config: NitronConfig): string {
 
   const metaDataXml = metaDataEntries.join('\n')
 
+  const targetSdk = config.android?.targetSdk ?? 34
+  const minSdk = config.android?.minSdk ?? 21
+
   return `<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="${config.packageId}"
     android:versionCode="${versionCode}"
     android:versionName="${config.version}">
 
-    <uses-sdk android:minSdkVersion="21" android:targetSdkVersion="34" />
+    <uses-sdk android:minSdkVersion="${minSdk}" android:targetSdkVersion="${targetSdk}" />
     
 ${permissionsXml}
 
@@ -110,7 +113,8 @@ ${permissionsXml}
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
         android:hardwareAccelerated="true"
-        android:usesCleartextTraffic="${allowCleartext}">
+        android:usesCleartextTraffic="${allowCleartext}"
+        android:networkSecurityConfig="@xml/network_security_config">
         
         <activity
             android:name="${activityName}"
