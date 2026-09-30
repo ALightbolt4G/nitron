@@ -143,6 +143,14 @@ export function validateConfig(config: NitronConfig): ValidationResult {
     )
   }
 
+  // --- SDK Version warnings ---
+  const targetSdk = (config as any).targetSdkVersion ?? config.android?.targetSdk ?? (config as any).targetSdk ?? config.android?.targetSdkVersion;
+  if (targetSdk !== undefined && targetSdk < 36) {
+    warnings.push(
+      `targetSdk is ${targetSdk}. Google Play Console requires targetSdk to be at least 36 for new releases.`
+    );
+  }
+
   // --- Permission warnings ---
   for (const perm of config.permissions) {
     if (!KNOWN_PERMISSIONS.has(perm)) {
