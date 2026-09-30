@@ -98,8 +98,8 @@ async function ensureAndroidJar(): Promise<string> {
     await access(jarPath);
   } catch {
     // We must use a valid SDK jar. Downloading platform-34 from Google's repository.
-    const platformUrl = 'https://dl.google.com/android/repository/platform-34-ext7_r01.zip';
-    const tempZipPath = join(cacheDir, 'platform-34.zip');
+    const platformUrl = 'https://dl.google.com/android/repository/platform-36_r01.zip';
+    const tempZipPath = join(cacheDir, 'platform-36.zip');
     
     console.log('Downloading Android SDK framework (android.jar)...');
     await downloadFile(platformUrl, tempZipPath);

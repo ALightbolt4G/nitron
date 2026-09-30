@@ -79,11 +79,19 @@ export interface NitronConfig {
   /**
    * Android-specific overrides.
    */
+  targetSdkVersion?: number
+  targetSdk?: number
+
+  /**
+   * Android-specific overrides.
+   */
   android?: {
-    /** Target Android SDK version (default: 34) */
+    /** Target Android SDK version (default: 36) */
     targetSdk?: number
+    targetSdkVersion?: number
     /** Minimum Android SDK version (default: 21) */
     minSdk?: number
+    minSdkVersion?: number
   }
 }
 

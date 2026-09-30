@@ -95,8 +95,8 @@ export function generateManifestXml(config: NitronConfig): string {
 
   const metaDataXml = metaDataEntries.join('\n')
 
-  const targetSdk = config.android?.targetSdk ?? 34
-  const minSdk = config.android?.minSdk ?? 21
+  const targetSdk = (config as any).targetSdkVersion ?? config.android?.targetSdk ?? (config as any).targetSdk ?? config.android?.targetSdkVersion ?? 36
+  const minSdk = (config as any).minSdkVersion ?? config.android?.minSdk ?? (config as any).minSdk ?? config.android?.minSdkVersion ?? 21
 
   return `<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"

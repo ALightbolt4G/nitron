@@ -133,11 +133,12 @@ export async function signApk(unsignedApkPath: string, outputDir: string, option
       )
     }
 
-    const { password } = await prompts({
+    const envPass = process.env.NITRON_KEYSTORE_PASSWORD;
+    const password = envPass || (await prompts({
       type: 'password',
       name: 'password',
       message: 'Enter release keystore password'
-    })
+    })).password;
 
     if (!password) {
       throw new Error('Password is required for release signing.')
@@ -248,11 +249,12 @@ export async function signAab(unsignedAabPath: string, outputDir: string, option
       )
     }
 
-    const { password } = await prompts({
+    const envPass = process.env.NITRON_KEYSTORE_PASSWORD;
+    const password = envPass || (await prompts({
       type: 'password',
       name: 'password',
       message: 'Enter release keystore password'
-    })
+    })).password;
 
     if (!password) {
       throw new Error('Password is required for release signing.')

@@ -159,10 +159,10 @@ export async function build(config: NitronConfig, options: BuildOptions): Promis
 
     if (options.release) {
       console.log('✓ Signed with release keystore')
-      console.log(`✓ targetSdkVersion: ${config.android?.targetSdk ?? 34}`)
-      console.log(`✓ minSdkVersion: ${config.android?.minSdk ?? 21}`)
-      
-      const targetSdk = config.android?.targetSdk ?? 34
+      const targetSdk = (config as any).targetSdkVersion ?? config.android?.targetSdk ?? (config as any).targetSdk ?? config.android?.targetSdkVersion ?? 36
+      const minSdk = (config as any).minSdkVersion ?? config.android?.minSdk ?? (config as any).minSdk ?? config.android?.minSdkVersion ?? 21
+      console.log(`✓ targetSdkVersion: ${targetSdk}`)
+      console.log(`✓ minSdkVersion: ${minSdk}`)
       if (isAab && targetSdk < 36) {
         console.log(`⚠ targetSdk is ${targetSdk}. Google Play Console requires targetSdk to be at least 36 for new AAB releases. Please update it in nitron.config.json or you will face an error.`)
       }
