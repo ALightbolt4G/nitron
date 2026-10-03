@@ -56,6 +56,9 @@ function mergeWithDefaults(partial: Record<string, any>): NitronConfig {
       clearCacheOnStart: partial.webview?.clearCacheOnStart ?? DEFAULTS.webview!.clearCacheOnStart,
       backButton: partial.webview?.backButton ?? DEFAULTS.webview!.backButton,
     },
+    android: partial.android,
+    minSdkVersion: partial.minSdkVersion,
+    targetSdkVersion: partial.targetSdkVersion,
   }
 }
 
