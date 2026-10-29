@@ -38,6 +38,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
+    "test": "tsc --noEmit",
     "prepare-template": "node scripts/prepare-template.js",
     "prepublishOnly": "npm run build"
   },
