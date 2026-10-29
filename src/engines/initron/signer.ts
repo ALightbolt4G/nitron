@@ -55,34 +55,83 @@ export interface IOSCredentials {
 }
 
 /**
- * Resolve the path to the bundled zsign binary for the current platform.
- */
-function getZsignPath(): string {
-  const platform = process.platform === 'win32' ? 'windows' : process.platform === 'darwin' ? 'macos' : 'linux'
-  const ext = process.platform === 'win32' ? '.exe' : ''
-  return join(__dirname, '..', 'vendor', 'zsign', platform, `zsign${ext}`)
-}
-
-/**
- * Verify the bundled zsign binary exists and is executable for this platform.
- * Only Linux is bundled as of v3.0.0 — macOS/Windows binaries are welcome
- * community contributions (same spirit as the existing "Testing on Linux
- * and Mac" call for help in the README).
+ * Resolve the path to the zsign binary.
+ * Searches:
+ * 1. NITRON_ZSIGN_PATH env variable
+ * 2. Bundled vendor/zsign/<platform>/zsign
+ * 3. Local toolchain/bin/zsign
+ * 4. Common macOS Homebrew paths (/opt/homebrew/bin/zsign, /usr/local/bin/zsign)
+ * 5. System PATH lookup (which / where)
  */
 export async function findZsign(): Promise<string> {
-  const zsignPath = getZsignPath()
+  // 1. Explicit env var
+  if (process.env.NITRON_ZSIGN_PATH) {
+    try {
+      await access(process.env.NITRON_ZSIGN_PATH)
+      return process.env.NITRON_ZSIGN_PATH
+    } catch {}
+  }
+
+  // 2. Bundled vendor path
+  const platform = process.platform === 'win32' ? 'windows' : process.platform === 'darwin' ? 'macos' : 'linux'
+  const ext = process.platform === 'win32' ? '.exe' : ''
+  const bundledPath = join(__dirname, '..', 'vendor', 'zsign', platform, `zsign${ext}`)
   try {
-    await access(zsignPath)
-    return zsignPath
-  } catch {
+    await access(bundledPath)
+    return bundledPath
+  } catch {}
+
+  // 3. Local toolchain path
+  const localToolchainPath = join(__dirname, '..', 'toolchain', 'bin', `zsign${ext}`)
+  try {
+    await access(localToolchainPath)
+    return localToolchainPath
+  } catch {}
+
+  // 4. Common macOS Homebrew paths
+  if (process.platform === 'darwin') {
+    for (const macPath of ['/opt/homebrew/bin/zsign', '/usr/local/bin/zsign']) {
+      try {
+        await access(macPath)
+        return macPath
+      } catch {}
+    }
+  }
+
+  // 5. System PATH lookup
+  try {
+    const lookupCmd = process.platform === 'win32' ? 'where' : 'which'
+    const { stdout } = await execFileAsync(lookupCmd, ['zsign'])
+    const found = stdout.trim().split(/\r?\n/)[0]
+    if (found) {
+      await access(found)
+      return found
+    }
+  } catch {}
+
+  if (process.platform === 'win32') {
     throw new Error(
-      `zsign binary not found for platform "${process.platform}".\n` +
-      `Nitron v3.0.0 ships a pre-built zsign for Linux only — macOS and\n` +
-      `Windows binaries are not bundled yet (community contributions welcome).\n` +
-      `You can build zsign yourself from https://github.com/zhlynn/zsign\n` +
-      `and place it at vendor/zsign/${process.platform === 'darwin' ? 'macos' : process.platform}/zsign`
+      `zsign binary not found for Windows.\n\n` +
+      `iOS apps can be built directly on Windows using WSL2 (where the bundled Linux zsign runs out-of-the-box):\n` +
+      `  wsl npx nitron build --target ios\n\n` +
+      `Alternatively, build a native zsign.exe (https://github.com/zhlynn/zsign) and set NITRON_ZSIGN_PATH.`
     )
   }
+
+  if (process.platform === 'darwin') {
+    throw new Error(
+      `zsign binary not found for macOS.\n\n` +
+      `Install zsign via Homebrew:\n` +
+      `  brew install zsign\n\n` +
+      `Or build from source: https://github.com/zhlynn/zsign`
+    )
+  }
+
+  throw new Error(
+    `zsign binary not found for Linux.\n` +
+    `Expected at: ${bundledPath}\n` +
+    `Install it via your package manager or set NITRON_ZSIGN_PATH.`
+  )
 }
 
 /**
