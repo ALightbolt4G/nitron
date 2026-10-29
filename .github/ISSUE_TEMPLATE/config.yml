@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Nitron Documentation & Technical Guide
+    url: https://github.com/ALightbolt4G/nitron#readme
+    about: Please check the official guide, config reference, and troubleshooting steps first.
+  - name: 🔒 Security Vulnerability Reporting
+    url: https://github.com/ALightbolt4G/nitron/security/policy
+    about: Report sensitive security vulnerabilities privately rather than via public issues.

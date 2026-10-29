@@ -1,20 +1,11 @@
 ---
-name: 'Test report: <OS> / <target> / <framework>'
-about: Tell us what you tested and whether it worked. Both successes and failures
-  help!
-title: ''
-labels: testing
-assignees: ''
-
----
-
----
-name: Test report
-about: Tell us what you tested and whether it worked. Both successes and failures help!
-title: "Test report: <OS> / <target> / <framework>"
+name: 'Test report'
+about: 'Tell us what you tested and whether it worked. Both successes and failures help!'
+title: 'Test report: <OS> / <target> / <framework>'
 labels: testing
 assignees: ''
 ---
+
 
 > **Do not paste secrets** (keystore files or passwords, `.p12` certificates, provisioning profiles, passwords from environment variables). Remove them from any logs first.
 

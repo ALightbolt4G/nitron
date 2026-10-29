@@ -3,20 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nitron - HTML/CSS/JS to Android APK</title>
+    <title>⚡ Nitron v3.1.5 — Turn Web Apps into Real Android & iOS Apps</title>
+    <meta name="description" content="Convert HTML/CSS/JS into real Android APK/AAB and iOS IPA apps in seconds — zero Android Studio, zero Gradle, zero Xcode. Full technical docs and reference.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;700;800;900&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-dark: #0a0a0f;
-            --bg-card: #14141e;
-            --bg-card-hover: #1c1c28;
-            --text-main: #f0f0f5;
-            --text-muted: #9494a0;
+            --bg-dark: #07080d;
+            --bg-card: #0f121d;
+            --bg-card-hover: #171b2a;
+            --bg-card-glass: rgba(15, 18, 29, 0.75);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --border-hover: rgba(0, 229, 255, 0.35);
+            --text-main: #f3f4f8;
+            --text-muted: #9ba1b6;
+            --text-faint: #62677b;
             --accent-cyan: #00e5ff;
-            --accent-blue: #0070f3;
-            --border-color: rgba(255, 255, 255, 0.1);
-            --gradient-accent: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
-            --font-main: system-ui, -apple-system, sans-serif;
-            --font-mono: 'Fira Code', Consolas, Monaco, monospace;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --accent-green: #10b981;
+            --accent-amber: #f59e0b;
+            --accent-rose: #f43f5e;
+            --gradient-accent: linear-gradient(135deg, #00e5ff 0%, #3b82f6 50%, #8b5cf6 100%);
+            --gradient-card: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.0) 100%);
+            --font-display: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'Fira Code', monospace;
+            --shadow-glow: 0 0 35px rgba(0, 229, 255, 0.2);
         }
 
         * {
@@ -25,31 +39,37 @@
             padding: 0;
         }
 
-        body {
-            font-family: var(--font-main);
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            line-height: 1.6;
-            overflow-x: hidden;
+        html {
             scroll-behavior: smooth;
         }
 
-        /* Animations */
-        .reveal {
-            opacity: 0;
-            transform: translateY(30px);
-            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        body {
+            font-family: var(--font-body);
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            line-height: 1.65;
+            overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
-        
-        .reveal.active {
-            opacity: 1;
-            transform: translateY(0);
+
+        /* Scroll Progress Bar */
+        #scroll-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 3px;
+            width: 0%;
+            background: var(--gradient-accent);
+            z-index: 9999;
+            transition: width 0.1s ease-out;
         }
 
         /* Typography */
-        h1, h2, h3 {
-            font-weight: 800;
-            line-height: 1.2;
+        h1, h2, h3, h4 {
+            font-family: var(--font-display);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: #fff;
         }
 
         .text-gradient {
@@ -59,610 +79,1512 @@
             background-clip: text;
         }
 
-        /* Buttons */
+        a {
+            color: var(--accent-cyan);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        a:hover {
+            color: #fff;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1240px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        /* Navigation */
+        nav.navbar {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(7, 8, 13, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .nav-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 70px;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-family: var(--font-display);
+            font-size: 1.35rem;
+            font-weight: 800;
+            color: #fff;
+        }
+
+        .brand-badge {
+            background: rgba(0, 229, 255, 0.15);
+            color: var(--accent-cyan);
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            font-family: var(--font-mono);
+            font-weight: 600;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 1.5rem;
+            align-items: center;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text-muted);
+            font-size: 0.92rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover, .nav-links a.active {
+            color: #fff;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
         .btn {
-            display: inline-block;
-            padding: 0.8rem 2rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0.65rem 1.4rem;
             border-radius: 8px;
             font-weight: 600;
+            font-size: 0.92rem;
             text-decoration: none;
-            transition: all 0.3s ease;
             cursor: pointer;
-            border: none;
-            font-size: 1rem;
+            transition: all 0.25s ease;
+            border: 1px solid transparent;
         }
 
         .btn-primary {
             background: var(--gradient-accent);
             color: #000;
-            box-shadow: 0 4px 15px rgba(0, 229, 255, 0.3);
+            font-weight: 700;
+            box-shadow: 0 4px 20px rgba(0, 229, 255, 0.25);
         }
 
         .btn-primary:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 229, 255, 0.4);
+            box-shadow: 0 6px 25px rgba(0, 229, 255, 0.4);
+            color: #000;
         }
 
         .btn-secondary {
             background: rgba(255, 255, 255, 0.05);
             color: var(--text-main);
-            border: 1px solid var(--border-color);
+            border-color: var(--border-color);
         }
 
         .btn-secondary:hover {
             background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+            color: #fff;
             transform: translateY(-2px);
         }
 
-        /* Layout */
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 2rem;
-        }
-
-        section {
-            padding: 6rem 0;
-        }
-
-        /* Hero Section */
+        /* Hero */
         .hero {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-            padding-top: 4rem;
+            padding: 5rem 0 3rem;
             position: relative;
+            text-align: center;
+            overflow: hidden;
         }
 
-        .hero-bg {
+        .hero::before {
+            content: '';
             position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: radial-gradient(circle at center, rgba(0, 229, 255, 0.1) 0%, transparent 50%);
+            top: -150px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 700px;
+            height: 450px;
+            background: radial-gradient(circle, rgba(0, 229, 255, 0.15) 0%, rgba(139, 92, 246, 0.08) 50%, transparent 70%);
             z-index: -1;
+            filter: blur(50px);
+            pointer-events: none;
+        }
+
+        .badge-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 1.8rem;
+        }
+
+        .badge-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--accent-green);
         }
 
         .hero h1 {
-            font-size: clamp(3rem, 5vw, 5rem);
+            font-size: clamp(2.5rem, 5.5vw, 4.4rem);
+            line-height: 1.1;
             margin-bottom: 1.5rem;
-            letter-spacing: -1px;
         }
 
-        .hero p {
-            font-size: clamp(1.2rem, 2vw, 1.5rem);
+        .hero p.lead {
+            font-size: clamp(1.1rem, 2vw, 1.35rem);
             color: var(--text-muted);
-            margin-bottom: 3rem;
-            max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
+            max-width: 820px;
+            margin: 0 auto 2.5rem;
         }
 
         .hero-actions {
             display: flex;
             gap: 1rem;
             justify-content: center;
-            margin-bottom: 4rem;
+            flex-wrap: wrap;
+            margin-bottom: 3.5rem;
         }
 
-        /* Terminal Window */
-        .terminal {
-            background: #000;
-            border-radius: 12px;
+        /* Stats Pill Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.25rem;
+            max-width: 960px;
+            margin: 0 auto 3.5rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
             border: 1px solid var(--border-color);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
-            max-width: 600px;
+            padding: 1.25rem;
+            border-radius: 12px;
+            text-align: center;
+            transition: border-color 0.2s, transform 0.2s;
+        }
+
+        .stat-card:hover {
+            border-color: var(--border-hover);
+            transform: translateY(-3px);
+        }
+
+        .stat-value {
+            font-family: var(--font-display);
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--accent-cyan);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Interactive Terminal Showcase */
+        .terminal-wrapper {
+            max-width: 860px;
             margin: 0 auto;
-            text-align: left;
+            background: #000;
+            border-radius: 14px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), var(--shadow-glow);
             overflow: hidden;
-            font-family: var(--font-mono);
+            text-align: left;
         }
 
         .terminal-header {
-            background: var(--bg-card);
-            padding: 10px 15px;
+            background: #111420;
+            padding: 12px 18px;
             display: flex;
-            gap: 8px;
+            align-items: center;
+            justify-content: space-between;
             border-bottom: 1px solid var(--border-color);
         }
 
-        .terminal-dot {
-            width: 12px; height: 12px;
+        .terminal-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .term-dot {
+            width: 12px;
+            height: 12px;
             border-radius: 50%;
         }
-        .dot-r { background: #ff5f56; }
-        .dot-y { background: #ffbd2e; }
-        .dot-g { background: #27c93f; }
+        .dot-red { background: #ff5f56; }
+        .dot-yellow { background: #ffbd2e; }
+        .dot-green { background: #27c93f; }
+
+        .terminal-tabs {
+            display: flex;
+            gap: 8px;
+        }
+
+        .term-tab {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 4px 12px;
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .term-tab.active {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--accent-cyan);
+            font-weight: 600;
+        }
 
         .terminal-body {
-            padding: 1.5rem;
-            color: var(--text-main);
-            font-size: 0.95rem;
-            line-height: 1.5;
-            min-height: 200px;
+            padding: 1.8rem;
+            font-family: var(--font-mono);
+            font-size: 0.92rem;
+            line-height: 1.6;
+            min-height: 240px;
+            color: #d1d5db;
         }
 
-        .typing-line { display: none; }
-        .typing-line.active { display: block; }
-        
-        .cursor {
+        .term-prompt { color: var(--accent-cyan); margin-right: 8px; font-weight: 600; }
+        .term-success { color: var(--accent-green); }
+        .term-info { color: var(--accent-blue); }
+        .term-dim { color: var(--text-faint); }
+        .term-warn { color: var(--accent-amber); }
+
+        /* Section Layouts */
+        section {
+            padding: 5.5rem 0;
+            position: relative;
+        }
+
+        .section-header {
+            text-align: center;
+            max-width: 760px;
+            margin: 0 auto 3.5rem;
+        }
+
+        .section-tag {
+            color: var(--accent-cyan);
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 0.6rem;
             display: inline-block;
-            width: 8px;
-            height: 1.2em;
-            background: var(--text-main);
-            vertical-align: middle;
-            animation: blink 1s step-end infinite;
         }
 
-        @keyframes blink { 50% { opacity: 0; } }
+        .section-header h2 {
+            font-size: clamp(2rem, 3.8vw, 2.8rem);
+            margin-bottom: 1rem;
+        }
 
-        .text-cyan { color: var(--accent-cyan); }
-        .text-green { color: #27c93f; }
-        .text-muted { color: var(--text-muted); }
+        .section-header p {
+            color: var(--text-muted);
+            font-size: 1.05rem;
+        }
 
-        /* Problem Section */
-        .cards-grid {
+        /* Cards Grid */
+        .grid-3 {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
             gap: 2rem;
-            margin-top: 3rem;
         }
 
         .card {
             background: var(--bg-card);
-            padding: 2.5rem;
-            border-radius: 16px;
+            background-image: var(--gradient-card);
             border: 1px solid var(--border-color);
-            transition: transform 0.3s, background 0.3s;
+            border-radius: 14px;
+            padding: 2rem;
+            transition: all 0.25s ease;
+            position: relative;
         }
 
         .card:hover {
-            transform: translateY(-5px);
-            background: var(--bg-card-hover);
+            border-color: var(--border-hover);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
         }
 
         .card-icon {
-            font-size: 2.5rem;
-            margin-bottom: 1.5rem;
-            display: inline-block;
-        }
-
-        .card h3 {
-            margin-bottom: 1rem;
-            font-size: 1.5rem;
-        }
-
-        /* How it works */
-        .pipeline-container {
-            max-width: 800px;
-            margin: 4rem auto;
-            position: relative;
-        }
-
-        .pipeline-container::before {
-            content: '';
-            position: absolute;
-            left: 24px;
-            top: 0; bottom: 0;
-            width: 2px;
-            background: var(--gradient-accent);
-            opacity: 0.3;
-        }
-
-        .pipeline-step {
-            display: flex;
-            align-items: center;
-            margin-bottom: 2rem;
-            position: relative;
-        }
-
-        .step-number {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: var(--bg-dark);
-            border: 2px solid var(--accent-cyan);
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            background: rgba(0, 229, 255, 0.1);
+            color: var(--accent-cyan);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
-            font-size: 1.2rem;
-            margin-right: 2rem;
-            z-index: 1;
-            color: var(--accent-cyan);
-            flex-shrink: 0;
-            box-shadow: 0 0 10px rgba(0, 229, 255, 0.2);
+            font-size: 1.5rem;
+            margin-bottom: 1.25rem;
+            border: 1px solid rgba(0, 229, 255, 0.2);
         }
 
-        .step-content {
-            background: var(--bg-card);
-            padding: 1.5rem;
-            border-radius: 12px;
-            flex-grow: 1;
-            border: 1px solid var(--border-color);
+        .card h3 {
+            font-size: 1.3rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .card p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
         }
 
         /* Comparison Table */
+        .table-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
         .table-responsive {
             overflow-x: auto;
-            margin-top: 3rem;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            background: var(--bg-card);
-            border-radius: 12px;
-            overflow: hidden;
-            border: 1px solid var(--border-color);
+            text-align: left;
+            font-size: 0.95rem;
         }
 
         th, td {
-            padding: 1.2rem;
-            text-align: left;
+            padding: 1.2rem 1.5rem;
             border-bottom: 1px solid var(--border-color);
         }
 
         th {
-            background: rgba(255, 255, 255, 0.05);
+            background: rgba(255, 255, 255, 0.03);
             font-weight: 600;
-        }
-
-        .cell-yes { color: #27c93f; }
-        .cell-no { color: #ff5f56; }
-        .cell-warn { color: #ffbd2e; }
-
-        /* Code Blocks */
-        .code-block {
-            background: #000;
-            border-radius: 12px;
-            padding: 1.5rem;
-            position: relative;
-            font-family: var(--font-mono);
-            border: 1px solid var(--border-color);
-            margin: 1.5rem 0;
-            overflow-x: auto;
-        }
-
-        .copy-btn {
-            position: absolute;
-            top: 10px; right: 10px;
-            background: rgba(255,255,255,0.1);
-            border: none;
-            color: var(--text-main);
-            padding: 5px 10px;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-        
-        .copy-btn:hover { background: rgba(255,255,255,0.2); }
-
-        pre { margin: 0; color: #a9b7c6; }
-        .token-cmd { color: #cc7832; }
-        .token-str { color: #6a8759; }
-
-        /* Footer */
-        footer {
-            background: var(--bg-card);
-            padding: 4rem 0 2rem;
-            border-top: 1px solid var(--border-color);
-            text-align: center;
-        }
-
-        .footer-links {
-            display: flex;
-            justify-content: center;
-            gap: 2rem;
-            margin-bottom: 2rem;
-        }
-
-        .footer-links a {
             color: var(--text-muted);
-            text-decoration: none;
-            transition: color 0.3s;
+            font-family: var(--font-display);
         }
 
-        .footer-links a:hover {
+        th.highlight, td.highlight {
+            background: rgba(0, 229, 255, 0.06);
+            border-left: 1px solid rgba(0, 229, 255, 0.2);
+            border-right: 1px solid rgba(0, 229, 255, 0.2);
+        }
+
+        .pill-win {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-green);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .pill-loss {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(244, 63, 94, 0.15);
+            color: var(--accent-rose);
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+        }
+
+        /* Framework Tabs */
+        .tab-nav {
+            display: flex;
+            gap: 10px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+            overflow-x: auto;
+            padding-bottom: 4px;
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 0.75rem 1.4rem;
+            color: var(--text-muted);
+            font-family: var(--font-display);
+            font-weight: 600;
+            font-size: 1rem;
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            position: relative;
+            transition: color 0.2s;
+            white-space: nowrap;
+        }
+
+        .tab-btn.active {
             color: var(--accent-cyan);
         }
 
-        .section-header {
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--accent-cyan);
+            border-radius: 3px;
+        }
+
+        .tab-pane {
+            display: none;
+        }
+
+        .tab-pane.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Code Block */
+        .code-container {
+            position: relative;
+            background: #000;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.4rem;
+            margin: 1.2rem 0;
+            overflow-x: auto;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .copy-button {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 0.78rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: var(--font-mono);
+        }
+
+        .copy-button:hover {
+            background: rgba(255, 255, 255, 0.16);
+            color: #fff;
+        }
+
+        /* Architecture Diagram & Flow */
+        .arch-diagram {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .arch-core {
+            background: rgba(0, 229, 255, 0.06);
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
             text-align: center;
-            margin-bottom: 4rem;
         }
 
-        .section-header h2 {
-            font-size: clamp(2rem, 4vw, 3rem);
-            margin-bottom: 1rem;
+        .arch-engines {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
         }
 
-        @media (max-width: 768px) {
-            .hero-actions { flex-direction: column; }
-            .pipeline-container::before { left: 20px; }
-            .step-number { width: 40px; height: 40px; font-size: 1rem; margin-right: 1rem; }
+        .engine-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.8rem;
+            position: relative;
+        }
+
+        .engine-card.android { border-top: 4px solid #3ddc84; }
+        .engine-card.ios { border-top: 4px solid #007aff; }
+
+        .pipeline-flow {
+            list-style: none;
+            margin-top: 1.25rem;
+            counter-reset: flow-counter;
+        }
+
+        .pipeline-flow li {
+            counter-increment: flow-counter;
+            padding: 0.7rem 0 0.7rem 2.4rem;
+            position: relative;
+            font-size: 0.92rem;
+            color: var(--text-muted);
+            border-left: 2px solid var(--border-color);
+            margin-left: 10px;
+        }
+
+        .pipeline-flow li::before {
+            content: counter(flow-counter);
+            position: absolute;
+            left: -11px;
+            top: 0.65rem;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--bg-dark);
+            border: 2px solid var(--accent-cyan);
+            font-size: 0.72rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Changelog Timeline */
+        .changelog-timeline {
+            position: relative;
+            max-width: 900px;
+            margin: 0 auto;
+            padding-left: 2rem;
+            border-left: 2px solid var(--border-color);
+        }
+
+        .changelog-entry {
+            margin-bottom: 3.5rem;
+            position: relative;
+        }
+
+        .changelog-entry::before {
+            content: '';
+            position: absolute;
+            left: -2.6rem;
+            top: 0.35rem;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent-cyan);
+            box-shadow: 0 0 12px var(--accent-cyan);
+        }
+
+        .changelog-badge {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 4px 12px;
+            background: rgba(0, 229, 255, 0.15);
+            color: var(--accent-cyan);
+            border-radius: 999px;
+            margin-bottom: 0.75rem;
+            border: 1px solid rgba(0, 229, 255, 0.3);
+        }
+
+        .changelog-list {
+            list-style: none;
+            margin-top: 1rem;
+        }
+
+        .changelog-list li {
+            padding: 0.5rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .changelog-list li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: var(--accent-cyan);
+        }
+
+        /* Config Table Grid */
+        .config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .config-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.4rem;
+            transition: border-color 0.2s;
+        }
+
+        .config-item:hover {
+            border-color: var(--border-hover);
+        }
+
+        .config-key {
+            font-family: var(--font-mono);
+            font-size: 0.95rem;
+            color: var(--accent-cyan);
+            font-weight: 600;
+        }
+
+        .config-type {
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            color: var(--accent-purple);
+            margin-left: 6px;
+        }
+
+        .config-desc {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            margin-top: 6px;
+        }
+
+        /* Callout Box */
+        .callout {
+            background: rgba(0, 229, 255, 0.05);
+            border-left: 4px solid var(--accent-cyan);
+            border-radius: 0 10px 10px 0;
+            padding: 1.2rem 1.5rem;
+            margin: 1.5rem 0;
+            font-size: 0.95rem;
+        }
+
+        .callout-warn {
+            background: rgba(245, 158, 11, 0.06);
+            border-left-color: var(--accent-amber);
+        }
+
+        .callout-title {
+            font-weight: 700;
+            margin-bottom: 4px;
+            color: #fff;
+        }
+
+        /* Footer */
+        footer {
+            background: #050609;
+            border-top: 1px solid var(--border-color);
+            padding: 4.5rem 0 2.5rem;
+            color: var(--text-muted);
+            font-size: 0.92rem;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 2fr repeat(3, 1fr);
+            gap: 3rem;
+            margin-bottom: 3.5rem;
+        }
+
+        .footer-brand p {
+            margin-top: 0.75rem;
+            font-size: 0.92rem;
+            max-width: 320px;
+        }
+
+        .footer-col h4 {
+            color: #fff;
+            font-size: 0.95rem;
+            margin-bottom: 1.25rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .footer-col ul {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.65rem;
+        }
+
+        .footer-col a {
+            color: var(--text-muted);
+        }
+
+        .footer-col a:hover {
+            color: var(--accent-cyan);
+        }
+
+        .footer-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 900px) {
+            .footer-grid { grid-template-columns: 1fr; gap: 2rem; }
+            .nav-links { display: none; }
+            .hero h1 { font-size: 2.4rem; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="hero-bg"></div>
-        <div class="container reveal">
-            <h1>Turn web apps into <span class="text-gradient">real APKs</span>.</h1>
-            <p>Convert HTML, CSS, and JS into a native Android APK in seconds.<br>Zero Android Studio. Zero Gradle. Zero Java knowledge.</p>
-            
-            <div class="hero-actions">
-                <a href="#quick-start" class="btn btn-primary">Get Started</a>
-                <a href="https://github.com/ALightbolt4G/nitron" target="_blank" class="btn btn-secondary">View on GitHub</a>
-            </div>
+    <!-- Scroll Progress Indicator -->
+    <div id="scroll-progress"></div>
 
-            <div class="terminal">
-                <div class="terminal-header">
-                    <div class="terminal-dot dot-r"></div>
-                    <div class="terminal-dot dot-y"></div>
-                    <div class="terminal-dot dot-g"></div>
-                </div>
-                <div class="terminal-body" id="typed-terminal">
-                    <!-- Typed by JS -->
-                </div>
-            </div>
-        </div>
-    </section>
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="container nav-content">
+            <a href="#" class="brand">
+                <span>⚡ Nitron</span>
+                <span class="brand-badge">v3.1.5</span>
+            </a>
 
-    <!-- The Problem -->
-    <section id="problem" class="container">
-        <div class="section-header reveal">
-            <h2>The Pain of Mobile Dev</h2>
-            <p class="text-muted">Why we built Nitron.</p>
-        </div>
-        <div class="cards-grid">
-            <div class="card reveal">
-                <div class="card-icon">🐘</div>
-                <h3>Android Studio</h3>
-                <p class="text-muted">Requires 8GB+ RAM, massive Gradle downloads, complex JDK configurations, and learning native toolchains just to wrap a webview.</p>
-            </div>
-            <div class="card reveal">
-                <div class="card-icon">🐢</div>
-                <h3>Cordova / Capacitor</h3>
-                <p class="text-muted">They claim "web-first" but still force you to install Android SDKs and wait minutes for Gradle builds every time you compile.</p>
-            </div>
-            <div class="card reveal">
-                <div class="card-icon">📱</div>
-                <h3>PWAs</h3>
-                <p class="text-muted">Great for the web, but you can't upload a PWA directly to Google Play. Users prefer installing real apps from the store.</p>
-            </div>
-        </div>
-    </section>
-
-    <!-- How It Works -->
-    <section id="how-it-works" class="container">
-        <div class="section-header reveal">
-            <h2>How It Works</h2>
-            <p class="text-muted">An elegant 8-step pipeline, running entirely in Node.js.</p>
-        </div>
-        
-        <div class="pipeline-container">
-            <!-- Injected by JS -->
-        </div>
-    </section>
-
-    <!-- Comparison -->
-    <section id="comparison" class="container">
-        <div class="section-header reveal">
-            <h2>Comparison</h2>
-            <p class="text-muted">See how Nitron stacks up.</p>
-        </div>
-        <div class="table-responsive reveal">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Feature</th>
-                        <th>Nitron</th>
-                        <th>Capacitor</th>
-                        <th>Cordova</th>
-                        <th>PWA</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td>Needs Android Studio</td>
-                        <td class="cell-yes">❌ Never</td>
-                        <td class="cell-no">✅ Always</td>
-                        <td class="cell-no">✅ Always</td>
-                        <td>—</td>
-                    </tr>
-                    <tr>
-                        <td>Needs Gradle</td>
-                        <td class="cell-yes">❌ Never</td>
-                        <td class="cell-no">✅ Always</td>
-                        <td class="cell-no">✅ Always</td>
-                        <td>—</td>
-                    </tr>
-                    <tr>
-                        <td>npm-only workflow</td>
-                        <td class="cell-yes">✅ Yes</td>
-                        <td class="cell-no">❌ No</td>
-                        <td class="cell-no">❌ No</td>
-                        <td class="cell-yes">✅ Yes</td>
-                    </tr>
-                    <tr>
-                        <td>Real APK output</td>
-                        <td class="cell-yes">✅ Yes</td>
-                        <td class="cell-yes">✅ Yes</td>
-                        <td class="cell-yes">✅ Yes</td>
-                        <td class="cell-no">❌ No</td>
-                    </tr>
-                    <tr>
-                        <td>Build time</td>
-                        <td class="cell-yes">~2 Seconds</td>
-                        <td class="cell-warn">Minutes</td>
-                        <td class="cell-warn">Minutes</td>
-                        <td>—</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </section>
-
-    <!-- Quick Start -->
-    <section id="quick-start" class="container">
-        <div class="section-header reveal">
-            <h2>Quick Start</h2>
-            <p class="text-muted">Get your APK in under 60 seconds.</p>
-        </div>
-
-        <div class="reveal">
-            <p>1. Scaffold a new project:</p>
-            <div class="code-block">
-                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                <pre><span class="token-cmd">npx</span> nitron init my-app
-<span class="token-cmd">cd</span> my-app</pre>
-            </div>
-            
-            <p>2. Preview locally with live-reload:</p>
-            <div class="code-block">
-                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                <pre><span class="token-cmd">npm</span> run dev</pre>
-            </div>
-
-            <p>3. Generate your APK:</p>
-            <div class="code-block">
-                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-                <pre><span class="token-cmd">npm</span> run build</pre>
-            </div>
-        </div>
-    </section>
-
-    <!-- Configuration & Requirements -->
-    <section class="container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 4rem;">
-        <div class="reveal">
-            <h3>Configuration</h3>
-            <p class="text-muted" style="margin: 1rem 0;">Everything is configured in a simple <code>app.js</code> file.</p>
-            <div class="code-block">
-                <pre>import { app } from 'nitron'
-
-app.init({
-  name: <span class="token-str">"My App"</span>,
-  packageId: <span class="token-str">"com.example.app"</span>,
-  version: <span class="token-str">"1.0.0"</span>,
-  entry: <span class="token-str">"index.html"</span>,
-  orientation: <span class="token-str">"portrait"</span>,
-  permissions: [<span class="token-str">"INTERNET"</span>]
-})</pre>
-            </div>
-        </div>
-
-        <div class="reveal">
-            <h3>Requirements</h3>
-            <p class="text-muted" style="margin: 1rem 0;">Nitron keeps your system clean.</p>
-            
-            <ul style="list-style: none; padding: 0;">
-                <li style="margin-bottom: 1rem; padding: 1rem; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border-color);">
-                    <strong style="color: var(--accent-cyan);">Node.js 18+</strong><br>
-                    <span class="text-muted">Used to run the build pipeline and dev server.</span>
-                </li>
-                <li style="padding: 1rem; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border-color);">
-                    <strong style="color: var(--accent-cyan);">Java Runtime 8+ (JRE)</strong><br>
-                    <span class="text-muted">Strictly used for APK Cryptographic Signing. No JDK needed.</span>
-                </li>
+            <ul class="nav-links">
+                <li><a href="#quick-start">Quick Start</a></li>
+                <li><a href="#config">Config</a></li>
+                <li><a href="#native-apis">Native APIs</a></li>
+                <li><a href="#security">Security</a></li>
+                <li><a href="#publishing">Google Play</a></li>
+                <li><a href="#ios">iOS Engine</a></li>
+                <li><a href="#architecture">Architecture</a></li>
+                <li><a href="#changelog">Changelog</a></li>
             </ul>
+
+            <div class="nav-actions">
+                <a href="https://github.com/ALightbolt4G/nitron" target="_blank" class="btn btn-secondary">
+                    <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+                    GitHub
+                </a>
+                <a href="#quick-start" class="btn btn-primary">Build Now</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <header class="hero">
+        <div class="container">
+            <div class="badge-pill">
+                <span class="badge-dot"></span>
+                <span>Nitron v3.1.5 Released — Production Security Fixes & Google Play AAB</span>
+            </div>
+
+            <h1>Turn HTML/CSS/JS into <br><span class="text-gradient">Real Android &amp; iOS Apps</span></h1>
+
+            <p class="lead">
+                No Android Studio. No Gradle. No Xcode. Build production signed APK, AAB, and iOS apps in ~2 seconds using only Node.js and a standard Java runtime.
+            </p>
+
+            <div class="hero-actions">
+                <a href="#quick-start" class="btn btn-primary">⚡ Quick Start in 60s</a>
+                <a href="#architecture" class="btn btn-secondary">📐 Architecture Reference</a>
+                <a href="#changelog" class="btn btn-secondary">📜 What's New in v3.1.5</a>
+            </div>
+
+            <!-- Stats -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value">~2.0s</div>
+                    <div class="stat-label">Average Build Time</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">~214 KB</div>
+                    <div class="stat-label">Ultra-light APK Output</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">API 21 – 36</div>
+                    <div class="stat-label">Android 5.0 through Android 16</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">0 MB</div>
+                    <div class="stat-label">Android Studio / Gradle required</div>
+                </div>
+            </div>
+
+            <!-- Interactive Terminal Showcase -->
+            <div class="terminal-wrapper">
+                <div class="terminal-header">
+                    <div class="terminal-controls">
+                        <span class="term-dot dot-red"></span>
+                        <span class="term-dot dot-yellow"></span>
+                        <span class="term-dot dot-green"></span>
+                    </div>
+                    <div class="terminal-tabs">
+                        <button class="term-tab active" onclick="switchTermDemo('apk')">Android APK</button>
+                        <button class="term-tab" onclick="switchTermDemo('aab')">Google Play AAB</button>
+                        <button class="term-tab" onclick="switchTermDemo('ios')">iOS Shell IPA</button>
+                        <button class="term-tab" onclick="switchTermDemo('pwa')">PWA Target</button>
+                    </div>
+                </div>
+                <div class="terminal-body" id="term-content">
+                    <!-- Dynamic Terminal Output -->
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Why Nitron: Comparison -->
+    <section id="comparison">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Comparison</span>
+                <h2>Why Developers Choose Nitron</h2>
+                <p>Stop wrestling with multi-gigabyte platform SDKs and fragile Gradle daemons just to render a web page inside a WebView.</p>
+            </div>
+
+            <div class="table-card">
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Capability / Requirement</th>
+                                <th class="highlight">⚡ Nitron v3.1.5</th>
+                                <th>Capacitor</th>
+                                <th>Cordova</th>
+                                <th>PWA</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Requires Android Studio?</td>
+                                <td class="highlight"><span class="pill-win">❌ Never</span></td>
+                                <td><span class="pill-loss">⚠️ Always required</span></td>
+                                <td><span class="pill-loss">⚠️ Always required</span></td>
+                                <td><span class="pill-win">❌ Never</span></td>
+                            </tr>
+                            <tr>
+                                <td>Requires Gradle Builds?</td>
+                                <td class="highlight"><span class="pill-win">❌ Zero Gradle</span></td>
+                                <td><span class="pill-loss">⚠️ Slow Gradle downloads</span></td>
+                                <td><span class="pill-loss">⚠️ Heavy Gradle builds</span></td>
+                                <td><span class="pill-win">—</span></td>
+                            </tr>
+                            <tr>
+                                <td>iOS Build without macOS?</td>
+                                <td class="highlight"><span class="pill-win">✅ Yes (Linux/WSL2 Toolchain)</span></td>
+                                <td><span class="pill-loss">❌ macOS Only</span></td>
+                                <td><span class="pill-loss">❌ macOS Only</span></td>
+                                <td><span class="pill-win">—</span></td>
+                            </tr>
+                            <tr>
+                                <td>Build Duration</td>
+                                <td class="highlight"><span class="pill-win">~2.0 Seconds</span></td>
+                                <td>2 – 5 Minutes</td>
+                                <td>3 – 8 Minutes</td>
+                                <td>Instant (web only)</td>
+                            </tr>
+                            <tr>
+                                <td>Google Play Output (.aab)</td>
+                                <td class="highlight"><span class="pill-win">✅ Real signed AAB (SDK 36)</span></td>
+                                <td><span class="pill-win">✅ Yes</span></td>
+                                <td><span class="pill-win">✅ Yes</span></td>
+                                <td><span class="pill-loss">❌ No (Not a real app)</span></td>
+                            </tr>
+                            <tr>
+                                <td>Output Size</td>
+                                <td class="highlight"><span class="pill-win">~214 KB</span></td>
+                                <td>~5 – 15 MB</td>
+                                <td>~6 – 20 MB</td>
+                                <td>Web cache</td>
+                            </tr>
+                            <tr>
+                                <td>Zero Deprecated File:// URLs</td>
+                                <td class="highlight"><span class="pill-win">✅ Safe HTTPS Local Origin</span></td>
+                                <td><span class="pill-win">✅ Local Server</span></td>
+                                <td><span class="pill-loss">❌ Insecure file://</span></td>
+                                <td><span class="pill-win">✅ HTTPS</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quick Start & Frameworks -->
+    <section id="quick-start" style="background: rgba(255, 255, 255, 0.01);">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Getting Started</span>
+                <h2>One-Minute Quick Start</h2>
+                <p>Nitron packages the static output of whatever you already use to build your site. Point entry at your built <code>index.html</code>.</p>
+            </div>
+
+            <!-- Tabbed Framework Guide -->
+            <div class="tab-nav">
+                <button class="tab-btn active" onclick="switchFramework('vanilla')">Vanilla HTML/JS</button>
+                <button class="tab-btn" onclick="switchFramework('vite')">Vite (React / Vue / Svelte)</button>
+                <button class="tab-btn" onclick="switchFramework('nextjs')">Next.js (Static Export)</button>
+                <button class="tab-btn" onclick="switchFramework('ios')">iOS Device / Simulator</button>
+            </div>
+
+            <div id="pane-vanilla" class="tab-pane active">
+                <p class="text-muted">For projects with standard HTML, CSS, and JavaScript files:</p>
+                <div class="code-container">
+                    <button class="copy-button" onclick="copySnippet(this)">Copy</button>
+<pre><span class="term-dim"># 1. Initialize project config</span>
+<span class="term-prompt">npx</span> nitron init --preset vanilla
+
+<span class="term-dim"># 2. Build your Android APK (test on any device)</span>
+<span class="term-prompt">npx</span> nitron build
+
+<span class="term-dim"># Output: dist/app.apk (~214 KB) ready in 2 seconds!</span></pre>
+                </div>
+            </div>
+
+            <div id="pane-vite" class="tab-pane">
+                <p class="text-muted">Works with Vite's standard build. Absolute paths such as <code>/assets/script.js</code> resolve seamlessly on Nitron's safe HTTPS origin without needing <code>base: './'</code>.</p>
+                <div class="code-container">
+                    <button class="copy-button" onclick="copySnippet(this)">Copy</button>
+<pre><span class="term-dim"># 1. Initialize Vite preset in your Vite project directory</span>
+<span class="term-prompt">npx</span> nitron init --preset vite
+
+<span class="term-dim"># 2. Build static assets</span>
+<span class="term-prompt">npm</span> run build
+
+<span class="term-dim"># 3. Package into native APK</span>
+<span class="term-prompt">npx</span> nitron build</pre>
+                </div>
+            </div>
+
+            <div id="pane-nextjs" class="tab-pane">
+                <p class="text-muted">Next.js is supported through static export. Add <code>output: "export"</code> to your <code>next.config.js</code>.</p>
+                <div class="code-container">
+                    <button class="copy-button" onclick="copySnippet(this)">Copy</button>
+<pre><span class="term-dim"># 1. Initialize Next.js preset (points entry to "out/index.html")</span>
+<span class="term-prompt">npx</span> nitron init --preset nextjs
+
+<span class="term-dim"># 2. Build Next.js static export</span>
+<span class="term-prompt">npm</span> run build
+
+<span class="term-dim"># 3. Build native APK</span>
+<span class="term-prompt">npx</span> nitron build</pre>
+                </div>
+                <div class="callout callout-warn">
+                    <div class="callout-title">⚠️ Dynamic Routes Note</div>
+                    Next.js static export rejects dynamic routes like <code>/products/[id]/page.tsx</code> unless you supply <code>generateStaticParams</code>. For apps, use query parameters instead (<code>/products/detail?id=...</code>) and read it with <code>useSearchParams()</code> inside a <code>&lt;Suspense&gt;</code> boundary.
+                </div>
+            </div>
+
+            <div id="pane-ios" class="tab-pane">
+                <p class="text-muted">Build iOS apps using the same config through the <code>initron</code> engine (WKWebView shell):</p>
+                <div class="code-container">
+                    <button class="copy-button" onclick="copySnippet(this)">Copy</button>
+<pre><span class="term-dim"># Build an unsigned .app for testing in the iOS Simulator (No Apple Developer account needed)</span>
+<span class="term-prompt">npx</span> nitron build --target ios-simulator
+
+<span class="term-dim"># Build a signed .ipa for real device / TestFlight / App Store (Linux or WSL2, no Mac needed!)</span>
+<span class="term-prompt">npx</span> nitron build --target ios</pre>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Configuration Guide (nitron.config.json) -->
+    <section id="config">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Configuration</span>
+                <h2>Declarative Configuration</h2>
+                <p>Everything lives in <code>nitron.config.json</code>. Pure JSON, no ES Module / CommonJS confusion, and completely CI/CD friendly.</p>
+            </div>
+
+            <div class="code-container">
+                <button class="copy-button" onclick="copySnippet(this)">Copy Full Config</button>
+<pre>{
+  <span class="term-info">"name"</span>: <span class="term-success">"My App"</span>,
+  <span class="term-info">"packageId"</span>: <span class="term-success">"com.myname.myapp"</span>,
+  <span class="term-info">"version"</span>: <span class="term-success">"1.0.0"</span>,
+  <span class="term-info">"entry"</span>: <span class="term-success">"out/index.html"</span>,
+  <span class="term-info">"orientation"</span>: <span class="term-success">"portrait"</span>,
+  <span class="term-info">"statusBar"</span>: <span class="term-cyan">true</span>,
+  <span class="term-info">"permissions"</span>: [<span class="term-success">"INTERNET"</span>, <span class="term-success">"ACCESS_NETWORK_STATE"</span>, <span class="term-success">"CAMERA"</span>],
+  <span class="term-info">"icon"</span>: <span class="term-success">"./public/icon.png"</span>,
+  <span class="term-info">"exclude"</span>: [<span class="term-success">"*.exe"</span>, <span class="term-success">"my-backend-folder"</span>, <span class="term-success">"secret.config"</span>],
+  <span class="term-info">"network"</span>: { <span class="term-info">"cleartext"</span>: <span class="term-cyan">false</span> },
+  <span class="term-info">"webview"</span>: {
+    <span class="term-info">"backButton"</span>: <span class="term-success">"history"</span>,
+    <span class="term-info">"clearCacheOnStart"</span>: <span class="term-cyan">false</span>,
+    <span class="term-info">"externalLinks"</span>: <span class="term-success">"browser"</span>,
+    <span class="term-info">"allowedHosts"</span>: [<span class="term-success">"pay.example.com"</span>]
+  },
+  <span class="term-info">"splashScreen"</span>: { <span class="term-info">"backgroundColor"</span>: <span class="term-success">"#0F121D"</span> },
+  <span class="term-info">"android"</span>: { <span class="term-info">"targetSdk"</span>: <span class="term-cyan">36</span>, <span class="term-info">"minSdk"</span>: <span class="term-cyan">21</span> }
+}</pre>
+            </div>
+
+            <!-- Field breakdown grid -->
+            <div class="config-grid" style="margin-top: 2rem;">
+                <div class="config-item">
+                    <div><span class="config-key">name</span><span class="config-type">string</span></div>
+                    <div class="config-desc">The application display name shown on device home screen and launcher.</div>
+                </div>
+                <div class="config-item">
+                    <div><span class="config-key">packageId</span><span class="config-type">string</span></div>
+                    <div class="config-desc">Unique reverse-DNS package identifier (e.g. <code>com.company.app</code>). Min 3 segments.</div>
+                </div>
+                <div class="config-item">
+                    <div><span class="config-key">webview.externalLinks</span><span class="config-type">'browser' | 'inapp'</span></div>
+                    <div class="config-desc"><strong>New in v3.1.5:</strong> Defaults to <code>"browser"</code> to keep third-party links outside the bridge WebView.</div>
+                </div>
+                <div class="config-item">
+                    <div><span class="config-key">webview.allowedHosts</span><span class="config-type">string[]</span></div>
+                    <div class="config-desc">Hostnames allowed to open inside WebView when externalLinks is 'browser' (e.g. payment/auth gates).</div>
+                </div>
+                <div class="config-item">
+                    <div><span class="config-key">exclude</span><span class="config-type">string[]</span></div>
+                    <div class="config-desc">Glob patterns or exact folder names kept out of the final APK/IPA bundle to reduce bundle size.</div>
+                </div>
+                <div class="config-item">
+                    <div><span class="config-key">android.targetSdk</span><span class="config-type">number</span></div>
+                    <div class="config-desc">Target Android API level. Defaults to <strong>36</strong> (compliant with newest Google Play mandates).</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Native JavaScript APIs -->
+    <section id="native-apis" style="background: rgba(255, 255, 255, 0.01);">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Runtime Bridge</span>
+                <h2>Built-in Native APIs</h2>
+                <p>Nitron exposes a secure zero-dependency bridge to your client JavaScript as <code>window.Nitron</code> without requiring third-party plugins.</p>
+            </div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-icon">🔔</div>
+                    <h3>System Push Notifications</h3>
+                    <p>Trigger native Android system notifications directly from your web UI. Automatically requests notification permissions on Android 13+.</p>
+                    <div class="code-container">
+                        <button class="copy-button" onclick="copySnippet(this)">Copy</button>
+<pre><span class="term-dim">// Call from your JavaScript code:</span>
+window.Nitron.showNotification(
+  <span class="term-success">'Order Confirmed'</span>,
+  <span class="term-success">'Your package is on its way!'</span>
+);</pre>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">📍</div>
+                    <h3>Runtime Permissions</h3>
+                    <p>Request native device permissions on-demand with built-in <code>checkSelfPermission</code> checks to prevent annoying redundant dialogs.</p>
+                    <div class="code-container">
+                        <button class="copy-button" onclick="copySnippet(this)">Copy</button>
+<pre><span class="term-dim">// Native permission requests:</span>
+window.Nitron.requestLocationPermission();
+window.Nitron.requestCameraPermission();
+window.Nitron.requestStoragePermission();</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Security Model -->
+    <section id="security">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Security Architecture</span>
+                <h2>Defense in Depth Security Model</h2>
+                <p>Nitron is engineered specifically to prevent malicious web exploits and bridge injection vulnerabilities.</p>
+            </div>
+
+            <div class="grid-3">
+                <div class="card">
+                    <div class="card-icon">🛡️</div>
+                    <h3>Safe Local Origin</h3>
+                    <p>Local files are served over <code>https://appassets.androidplatform.net</code> via Android's modern <code>shouldInterceptRequest</code>. No insecure <code>file://</code> URLs or dangerous universal access permissions.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">🔒</div>
+                    <h3>External Link Isolation</h3>
+                    <p>External links load in the system browser by default. This ensures untrusted third-party websites never have access to the native <code>window.Nitron</code> bridge.</p>
+                </div>
+                <div class="card">
+                    <div class="card-icon">🎯</div>
+                    <h3>Exact Host Origin Check</h3>
+                    <p>In v3.1.5, origin validation performs an exact hostname comparison. Look-alike phishing domains (such as <code>appassets.androidplatform.net.evil.com</code>) are strictly rejected.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Google Play Publishing -->
+    <section id="publishing" style="background: rgba(255, 255, 255, 0.01);">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Publishing</span>
+                <h2>Publishing to Google Play Store</h2>
+                <p>Google Play requires an Android App Bundle (<code>.aab</code>) and a persistent release keystore.</p>
+            </div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-icon">🔑</div>
+                    <h3>Step 1: Generate Release Keystore</h3>
+                    <p>Run once to generate your cryptographic release key. Keep this file safe; you cannot update your app in Google Play without it.</p>
+                    <div class="code-container">
+                        <button class="copy-button" onclick="copySnippet(this)">Copy</button>
+<pre><span class="term-prompt">npx</span> nitron keystore
+<span class="term-dim"># Generates: nitron-release.keystore</span></pre>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">📦</div>
+                    <h3>Step 2: Build Signed AAB</h3>
+                    <p>Build an optimized, signed Android App Bundle ready to upload directly to the Google Play Console.</p>
+                    <div class="code-container">
+                        <button class="copy-button" onclick="copySnippet(this)">Copy</button>
+<pre><span class="term-prompt">npx</span> nitron build --target aab --release
+<span class="term-dim"># Generates: dist/app.aab (Play Store compliant)</span></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- iOS Engine (initron) -->
+    <section id="ios">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Cross-Platform Engine</span>
+                <h2>iOS Support without macOS (initron)</h2>
+                <p>Nitron builds genuine iOS apps using the same <code>nitron.config.json</code>, with a WKWebView shell compiled directly on Linux or WSL2.</p>
+            </div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <h3>How iOS Cross-Compilation Works</h3>
+                    <p style="margin-bottom: 1rem;">
+                        Instead of requiring macOS and Xcode, Nitron employs an isolated open-source cross-compilation toolchain based on <strong>cctools-port</strong>, <strong>apple-libtapi</strong>, and <strong>zsign</strong>.
+                    </p>
+                    <ul style="color: var(--text-muted); padding-left: 1.25rem; font-size: 0.92rem; line-height: 1.8;">
+                        <li><strong>Pure Mach-O arm64 Binary:</strong> Real native executable generated without Xcode.</li>
+                        <li><strong>Standard Payload Structure:</strong> Creates <code>Payload/App.app/...</code> directory format accepted by App Store & TestFlight.</li>
+                        <li><strong>zsign Code Signing:</strong> Signs the application with your Apple Developer Certificate (<code>.p12</code> + <code>.mobileprovision</code>).</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>iOS CLI Commands</h3>
+                    <div class="code-container">
+                        <button class="copy-button" onclick="copySnippet(this)">Copy</button>
+<pre><span class="term-dim"># 1. Unsigned .app for iOS Simulator:</span>
+<span class="term-prompt">npx</span> nitron build --target ios-simulator
+
+<span class="term-dim"># 2. Signed .ipa for real iPhone/iPad:</span>
+<span class="term-prompt">NITRON_IOS_P12_PATH</span>=./cert.p12 \
+<span class="term-prompt">NITRON_IOS_P12_PASSWORD</span>=secret \
+<span class="term-prompt">NITRON_IOS_PROVISION_PATH</span>=./profile.mobileprovision \
+<span class="term-prompt">npx</span> nitron build --target ios</pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Architecture Deep Dive -->
+    <section id="architecture" style="background: rgba(255, 255, 255, 0.01);">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Architecture</span>
+                <h2>Nitron Dual-Engine Architecture</h2>
+                <p>A decoupled, high-performance architecture separating platform-agnostic core logic from specialized build engines.</p>
+            </div>
+
+            <div class="arch-diagram">
+                <div class="arch-core">
+                    <h3 style="color: var(--accent-cyan); margin-bottom: 4px;">Shared Agnostic Core</h3>
+                    <p class="text-muted" style="font-size: 0.9rem;"><code>cli.ts</code> • <code>config.ts</code> • <code>validator.ts</code> • <code>types.ts</code> • <code>pwa.ts</code> • <code>dev.ts</code></p>
+                </div>
+
+                <div class="arch-engines">
+                    <div class="engine-card android">
+                        <h3 style="color: #3ddc84; margin-bottom: 8px;">🤖 Nitronoid (Android Engine)</h3>
+                        <p class="text-muted" style="font-size: 0.88rem;">Produces signed APK &amp; AAB packages in under 2 seconds without Gradle.</p>
+                        <ol class="pipeline-flow">
+                            <li><strong>Unpack:</strong> Extracts pre-compiled <code>base.apk</code> template.</li>
+                            <li><strong>Inject Assets:</strong> Injects web files into <code>assets/www/</code>.</li>
+                            <li><strong>Compile Resources:</strong> Runs lightweight <code>aapt2</code> for icons and manifest.</li>
+                            <li><strong>Pack &amp; Sign:</strong> Packages via <code>jszip</code> and signs with <code>uber-apk-signer</code>.</li>
+                        </ol>
+                    </div>
+
+                    <div class="engine-card ios">
+                        <h3 style="color: #007aff; margin-bottom: 8px;">🍎 Initron (iOS Engine)</h3>
+                        <p class="text-muted" style="font-size: 0.88rem;">Produces Mach-O arm64 IPA &amp; Simulator .app bundles without Xcode.</p>
+                        <ol class="pipeline-flow">
+                            <li><strong>Unpack Shell:</strong> Extracts pre-compiled WKWebView native shell.</li>
+                            <li><strong>Inject Assets:</strong> Copies web files into <code>NitronShell.app/www/</code>.</li>
+                            <li><strong>Generate Plist:</strong> Patches XML <code>Info.plist</code> with permissions and metadata.</li>
+                            <li><strong>Codesign:</strong> Signs with <code>zsign</code> and packages into <code>dist/app.ipa</code>.</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Changelog -->
+    <section id="changelog">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">Release History</span>
+                <h2>Nitron Changelog</h2>
+                <p>Track releases, security fixes, and feature additions.</p>
+            </div>
+
+            <div class="changelog-timeline">
+                <!-- v3.1.5 -->
+                <div class="changelog-entry">
+                    <span class="changelog-badge">v3.1.5 (Latest)</span>
+                    <h3 style="margin-bottom: 8px;">Security Hardening &amp; Toolchain Improvements</h3>
+                    <ul class="changelog-list">
+                        <li><strong>External Links Default to System Browser:</strong> <code>webview.externalLinks</code> defaults to <code>"browser"</code>, preventing third-party websites from loading inside the bridge WebView.</li>
+                        <li><strong>Exact Hostname Origin Checks:</strong> Strict origin validation for bridge calls and geolocation; rejects spoofed hostnames like <code>appassets.androidplatform.net.evil.com</code>.</li>
+                        <li><strong>XML Sanitization:</strong> Values written to <code>AndroidManifest.xml</code> (app name, splash color) are escaped to prevent XML injection.</li>
+                        <li><strong>Auto-downloading Toolchain:</strong> <code>scripts/prepare-template.js</code> automatically locates or downloads <code>android.jar</code> and R8 dexer from Google Maven.</li>
+                        <li><strong>License Clarification:</strong> Formally designated as <code>GPL-2.0-only</code> with the Nitron Output Exception.</li>
+                    </ul>
+                </div>
+
+                <!-- v3.1.0 - v3.1.4 -->
+                <div class="changelog-entry">
+                    <span class="changelog-badge">v3.1.0 – v3.1.4</span>
+                    <h3 style="margin-bottom: 8px;">Asset Exclusion &amp; SDK 36 Support</h3>
+                    <ul class="changelog-list">
+                        <li><strong>Asset Exclusion:</strong> Added <code>exclude</code> array in <code>nitron.config.json</code> supporting glob patterns (e.g. <code>*.exe</code>).</li>
+                        <li><strong>Android 16 Support:</strong> Default <code>targetSdk</code> raised to 36 with Play Console warnings.</li>
+                        <li><strong>AAB Fixes:</strong> R8 mapping and network security fixes for Google Play bundles.</li>
+                    </ul>
+                </div>
+
+                <!-- v3.0.0 -->
+                <div class="changelog-entry">
+                    <span class="changelog-badge">v3.0.0</span>
+                    <h3 style="margin-bottom: 8px;">iOS Engine (initron) &amp; Architecture Restructuring</h3>
+                    <ul class="changelog-list">
+                        <li><strong>New iOS Engine:</strong> Cross-compile native iOS apps from Linux using WKWebView shell.</li>
+                        <li><strong>Dual-Engine Architecture:</strong> Clear separation between <code>nitronoid</code> (Android) and <code>initron</code> (iOS).</li>
+                    </ul>
+                </div>
+
+                <!-- v2.1.0 -->
+                <div class="changelog-entry">
+                    <span class="changelog-badge">v2.1.0</span>
+                    <h3 style="margin-bottom: 8px;">Native JS Interface &amp; HTTPS Local Origin</h3>
+                    <ul class="changelog-list">
+                        <li><strong>window.Nitron:</strong> Added native JavaScript APIs for Location, Camera, Storage, and Push Notifications.</li>
+                        <li><strong>Secure Origin:</strong> Migration from <code>file://</code> to <code>https://appassets.androidplatform.net</code>.</li>
+                        <li><strong>AAB Export:</strong> Initial support for Google Play App Bundles.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- License Section -->
+    <section id="license" style="background: rgba(255, 255, 255, 0.01);">
+        <div class="container" style="max-width: 900px; text-align: center;">
+            <div class="card" style="padding: 3rem;">
+                <h2 style="margin-bottom: 1rem;">⚖️ License &amp; The Nitron Output Exception</h2>
+                <p style="color: var(--text-muted); font-size: 1.05rem; margin-bottom: 1.5rem;">
+                    Nitron is licensed under <strong>GPL-2.0 with the Nitron Output Exception</strong>.
+                </p>
+                <div class="callout" style="text-align: left; margin: 0 auto 1.5rem;">
+                    <div class="callout-title">What does the Output Exception mean for you?</div>
+                    You may use Nitron to build applications and distribute the resulting files (APK, AAB, IPA, PWA) <strong>under any terms of your choice, including proprietary and commercial closed-source terms</strong>. Your code remains 100% yours!
+                </div>
+                <p class="text-faint" style="font-size: 0.85rem;">The GPL applies only to modifying and redistributing the Nitron CLI and build tool itself.</p>
+            </div>
         </div>
     </section>
 
     <!-- Footer -->
     <footer>
         <div class="container">
-            <div class="footer-links">
-                <a href="https://github.com/ALightbolt4G/nitron" target="_blank">GitHub</a>
-                <a href="https://www.npmjs.com/package/nitron" target="_blank">npm</a>
+            <div class="footer-grid">
+                <div class="footer-brand">
+                    <div class="brand">
+                        <span>⚡ Nitron</span>
+                        <span class="brand-badge">v3.1.5</span>
+                    </div>
+                    <p>Convert HTML, CSS, and JavaScript into native Android &amp; iOS apps with zero platform SDK knowledge.</p>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Documentation</h4>
+                    <ul>
+                        <li><a href="#quick-start">Quick Start</a></li>
+                        <li><a href="#config">Configuration</a></li>
+                        <li><a href="#native-apis">Native APIs</a></li>
+                        <li><a href="#publishing">Google Play</a></li>
+                        <li><a href="#ios">iOS Engine</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Engineering</h4>
+                    <ul>
+                        <li><a href="#architecture">Architecture</a></li>
+                        <li><a href="#security">Security Model</a></li>
+                        <li><a href="#changelog">Changelog</a></li>
+                        <li><a href="#license">Output Exception</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-col">
+                    <h4>Community</h4>
+                    <ul>
+                        <li><a href="https://github.com/ALightbolt4G/nitron" target="_blank">GitHub Repository</a></li>
+                        <li><a href="https://www.npmjs.com/package/nitron" target="_blank">npm Registry</a></li>
+                        <li><a href="https://github.com/ALightbolt4G/nitron/issues" target="_blank">Report an Issue</a></li>
+                    </ul>
+                </div>
             </div>
-            <p class="text-muted">MIT License. Built with ❤️ by ALightbolt4G</p>
+
+            <div class="footer-bottom">
+                <p>© 2026 Nitron. Released under GPL-2.0 with Nitron Output Exception.</p>
+                <p>Crafted for modern web developers worldwide ⚡</p>
+            </div>
         </div>
     </footer>
 
+    <!-- Interactive Scripts -->
     <script>
-        // Terminal Animation
-        const termLines = [
-            { text: "$ npx nitron init my-app", class: "text-cyan", delay: 800 },
-            { text: "$ cd my-app", class: "text-cyan", delay: 1500 },
-            { text: "$ npm run build", class: "text-cyan", delay: 2000 },
-            { text: "ℹ Building Android target...", class: "text-muted", delay: 2300, printDelay: 20 },
-            { text: "✓ Built successfully → dist/app.apk (12.4KB) in 2.0s", class: "text-green", delay: 3500, printDelay: 10 }
-        ];
-
-        async function typeTerminal() {
-            const container = document.getElementById('typed-terminal');
-            
-            for (const line of termLines) {
-                await new Promise(r => setTimeout(r, line.delay - (termLines[termLines.indexOf(line)-1]?.delay || 0)));
-                
-                const p = document.createElement('div');
-                p.className = line.class;
-                container.appendChild(p);
-
-                if (line.printDelay) {
-                    for (let i = 0; i < line.text.length; i++) {
-                        p.textContent += line.text[i];
-                        await new Promise(r => setTimeout(r, line.printDelay));
-                    }
-                } else {
-                    p.textContent = line.text;
-                }
-            }
-            
-            const cursor = document.createElement('span');
-            cursor.className = 'cursor';
-            container.appendChild(cursor);
-        }
-
-        // Pipeline Steps Injection
-        const steps = [
-            { title: "Read Config", desc: "Loads app.js configuration." },
-            { title: "Validate", desc: "Ensures package ID and files exist." },
-            { title: "Unpack Template", desc: "Extracts the base Android APK." },
-            { title: "Inject Assets", desc: "Copies HTML/CSS/JS into assets/ folder." },
-            { title: "Patch Manifest", desc: "Writes binary AndroidManifest.xml natively." },
-            { title: "Pack", desc: "Zips it back into .apk format." },
-            { title: "Sign", desc: "Cryptographically signs the APK." },
-            { title: "Output", desc: "Delivers dist/app.apk." }
-        ];
-
-        const pipelineContainer = document.querySelector('.pipeline-container');
-        steps.forEach((step, i) => {
-            pipelineContainer.innerHTML += `
-                <div class="pipeline-step reveal">
-                    <div class="step-number">${i + 1}</div>
-                    <div class="step-content">
-                        <h3 style="color: var(--accent-cyan); margin-bottom: 0.5rem;">${step.title}</h3>
-                        <p class="text-muted">${step.desc}</p>
-                    </div>
-                </div>
-            `;
+        // Scroll Progress Bar
+        window.addEventListener('scroll', () => {
+            const doc = document.documentElement;
+            const scroll = doc.scrollTop || document.body.scrollTop;
+            const height = doc.scrollHeight - doc.clientHeight;
+            const progress = (scroll / height) * 100;
+            document.getElementById('scroll-progress').style.width = progress + '%';
         });
 
-        // Intersection Observer for Reveal Animations
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('active');
-                }
+        // Terminal Demos Data
+        const terminalDemos = {
+            apk: [
+                { text: "$ npx nitron build", cls: "term-prompt" },
+                { text: "⚡ Nitron v3.1.5", cls: "term-info" },
+                { text: "Step 1/2: Reading configuration...", cls: "term-dim" },
+                { text: "✓ Configuration loaded from nitron.config.json", cls: "term-success" },
+                { text: "Step 2/2: Validating project...", cls: "term-dim" },
+                { text: "✓ Project valid (Target SDK: 36, Entry: index.html)", cls: "term-success" },
+                { text: "ℹ Building Android target (APK)...", cls: "term-info" },
+                { text: "✓ Unpacked base.apk template (8.4KB)", cls: "term-dim" },
+                { text: "✓ Assets injected into assets/www/", cls: "term-dim" },
+                { text: "✓ Manifest compiled with aapt2", cls: "term-dim" },
+                { text: "✓ APK signed successfully with debug key", cls: "term-success" },
+                { text: "✨ Built: dist/app.apk (214.2 KB) in 1.84s!", cls: "term-success" }
+            ],
+            aab: [
+                { text: "$ npx nitron build --target aab --release", cls: "term-prompt" },
+                { text: "⚡ Nitron v3.1.5 — Release Mode", cls: "term-info" },
+                { text: "✓ Keystore loaded: nitron-release.keystore", cls: "term-success" },
+                { text: "ℹ Target SDK: 36 (Compliant with Google Play Console 2026 requirements)", cls: "term-info" },
+                { text: "✓ Compiling resources with aapt2...", cls: "term-dim" },
+                { text: "✓ Generating base module & manifest...", cls: "term-dim" },
+                { text: "✓ Packaging with bundletool...", cls: "term-dim" },
+                { text: "✓ Cryptographic JAR release signature applied", cls: "term-success" },
+                { text: "✨ Google Play Bundle ready: dist/app.aab (188.5 KB) in 2.31s!", cls: "term-success" }
+            ],
+            ios: [
+                { text: "$ npx nitron build --target ios", cls: "term-prompt" },
+                { text: "⚡ Nitron v3.1.5 — initron engine", cls: "term-info" },
+                { text: "✓ Unpacking pre-compiled Mach-O arm64 WKWebView shell...", cls: "term-dim" },
+                { text: "✓ Injecting web assets into Payload/App.app/www/...", cls: "term-dim" },
+                { text: "✓ Generated Info.plist with permission usage strings", cls: "term-dim" },
+                { text: "✓ Signing with zsign via Apple Developer Profile...", cls: "term-success" },
+                { text: "✨ Signed iOS IPA ready: dist/app.ipa in 2.15s!", cls: "term-success" }
+            ],
+            pwa: [
+                { text: "$ npx nitron build --target pwa", cls: "term-prompt" },
+                { text: "⚡ Nitron v3.1.5 — PWA Generator", cls: "term-info" },
+                { text: "✓ Generating manifest.webmanifest from nitron.config.json...", cls: "term-dim" },
+                { text: "✓ Injecting service-worker.js with offline cache strategy...", cls: "term-dim" },
+                { text: "✓ Generating multi-density PWA icons...", cls: "term-dim" },
+                { text: "✨ PWA built successfully: dist/pwa/ in 0.42s!", cls: "term-success" }
+            ]
+        };
+
+        function switchTermDemo(target) {
+            document.querySelectorAll('.term-tab').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            renderTerminal(terminalDemos[target]);
+        }
+
+        function renderTerminal(lines) {
+            const container = document.getElementById('term-content');
+            container.innerHTML = '';
+            lines.forEach((l, index) => {
+                const row = document.createElement('div');
+                row.className = l.cls;
+                row.textContent = l.text;
+                row.style.opacity = '0';
+                row.style.transform = 'translateY(4px)';
+                row.style.transition = 'opacity 0.2s ease, transform 0.2s ease';
+                container.appendChild(row);
+                setTimeout(() => {
+                    row.style.opacity = '1';
+                    row.style.transform = 'translateY(0)';
+                }, index * 40);
             });
-        }, { threshold: 0.1, rootMargin: "0px 0px -50px 0px" });
+        }
 
-        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+        // Initialize Default Terminal
+        renderTerminal(terminalDemos.apk);
 
-        // Start terminal typing
-        setTimeout(typeTerminal, 500);
+        // Framework Switcher
+        function switchFramework(id) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById('pane-' + id).classList.add('active');
+        }
 
-        // Copy Button utility
-        function copyCode(btn) {
+        // Copy Code Snippet Utility
+        function copySnippet(btn) {
             const pre = btn.nextElementSibling;
-            navigator.clipboard.writeText(pre.innerText).then(() => {
-                const originalText = btn.innerText;
-                btn.innerText = 'Copied!';
-                setTimeout(() => btn.innerText = originalText, 2000);
+            const text = pre.innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const old = btn.innerText;
+                btn.innerText = 'Copied! ✓';
+                btn.style.color = '#10b981';
+                setTimeout(() => {
+                    btn.innerText = old;
+                    btn.style.color = '';
+                }, 2000);
             });
         }
     </script>

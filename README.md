@@ -1,98 +1,89 @@
 <p align="center">
-  <img src="assets/default-icon.png" width="120" height="120" alt="Nitron Logo" />
-  <h1 align="center">⚡ Nitron v3.0.0</h1>
-  <p align="center">
-    <strong>Convert HTML/CSS/JS into real Android & iOS apps — with zero platform SDK knowledge.</strong>
-  </p>
-  <p align="center">
-    <a href="#quick-start">Quick Start</a> •
-    <a href="#configuration">Configuration</a> •
-    <a href="#web-first-runtime">Web-First Runtime</a> •
-    <a href="#frameworks">Framework Compatibility</a> •
-    <a href="#under-the-hood">Under the Hood</a>
-  </p>
+  <img src="https://raw.githubusercontent.com/ALightbolt4G/nitron/main/assets/default-icon.png" width="120" height="120" alt="Nitron logo">
 </p>
 
----
+<h1 align="center">⚡ Nitron v3.1.5</h1>
 
-## 🚀 What's New in v3.0.0
+<p align="center">
+  <strong>Turn HTML/CSS/JS into real Android &amp; iOS apps — no Android Studio, no Gradle, no Xcode.</strong>
+</p>
 
-- **iOS support (new engine: `initron`)**: Nitron now builds real iOS apps from the exact same `nitron.config.json`, using a WKWebView shell instead of Android's WebView. No Xcode is required — not even for the one-time shell build (see [`ARCHITECTURE.md`](ARCHITECTURE.md) §5–6 for the full breakdown of how).
-  - `nitron build --target ios-simulator` — produces an **unsigned** `.app`, ready to test in the iOS Simulator. No Apple Developer account needed at all, since the Simulator doesn't require code signing.
-  - `nitron build --target ios` — produces a signed `.ipa` for a real device, using [zsign](https://github.com/zhlynn/zsign)/[ldid](https://github.com/ProcursusTeam/ldid) instead of Xcode's `codesign`. Requires an Apple Developer certificate — read from `NITRON_IOS_P12_PATH`, `NITRON_IOS_P12_PASSWORD`, `NITRON_IOS_PROVISION_PATH`.
-  - **One-time setup required**: run `scripts/build-ios-toolchain.sh` + `scripts/build-shell-device.sh` once (or trigger `.github/workflows/build-shell-device.yml`, a plain Linux runner — no macOS anywhere in that path). Full details, every file, every design decision: **[`ARCHITECTURE.md`](ARCHITECTURE.md)**.
-- **Internal restructuring**: the codebase is now split into two isolated engines — `src/engines/nitronoid/` (Android, unchanged logic) and `src/engines/initron/` (iOS, new) — sharing only a small platform-agnostic core. See `ARCHITECTURE.md` §2–4 for the full file-by-file map.
-- **Validated end-to-end**: the full Linux → `.ipa` pipeline has been run for real (on Windows/WSL2), producing a genuine `Mach-O arm64` binary, correct `Payload/App.app/...` structure, and an `.ipa` accepted by a real third-party iOS package validator (BrowserStack App Live). See [`ARCHITECTURE.md`](ARCHITECTURE.md) §10 for the exact issues hit and fixed along the way — useful reading if you hit something similar.
+<p align="center">
+  <a href="#quick-start">Quick Start</a> •
+  <a href="#publishing-to-google-play">Google Play</a> •
+  <a href="#configuration">Configuration</a> •
+  <a href="#native-apis">Native APIs</a> •
+  <a href="#security-model">Security</a> •
+  <a href="#framework-compatibility">Frameworks</a> •
+  <a href="#how-it-works">How it works</a> •
+  <a href="#ios">iOS</a> •
+  <a href="#limitations">Limitations</a>
+</p>
 
-## 🚀 What's New in v2.1.0
+<p align="center">
+  <img src="https://raw.githubusercontent.com/ALightbolt4G/nitron/main/assets/nitron-demo.gif" width="760" alt="Running nitron build: a signed APK in under two seconds">
+</p>
 
-- **Google Play Protect Compliance**: Completely secured the WebView permissions architecture. Permission requests and geolocation prompts are now strictly validated against the internal secure origin (`https://appassets.androidplatform.net`). This eliminates arbitrary WebView permission grants and fully complies with the latest Google Play Protect safety standards!
-- **Native JavaScript-to-Android Interfaces**: We added native JS interfaces for critical device features:
-  - `window.Nitron.requestLocationPermission()`
-  - `window.Nitron.requestCameraPermission()`
-  - `window.Nitron.requestStoragePermission()`
-- **Dynamic Permission Handling**: Added robust `checkSelfPermission` mechanisms before initiating device access requests, preventing unnecessary native dialogs and ensuring a smoother user experience.
-- **AAB Support for Google Play**: You can now build Android App Bundles (`.aab`) by running `npx nitron build --target aab` (Note: requires a full JDK to sign the AAB).
-- **Native Push Notifications**: Trigger real Android notifications directly from your web code using `window.Nitron.showNotification('Title', 'Message')`.
-- **Secure HTTPS Local Origin (`appassets.androidplatform.net`)**: We completely removed the deprecated `file://` protocol. Your local web files are now served securely via a custom `shouldInterceptRequest` handler.
-- **Zero CORS Issues**: Absolute paths (`/assets/image.png`), `fetch()` requests to external HTTPS APIs, Cookies, and `localStorage` work flawlessly just like they do on a real browser.
-- **Micro-Architecture**: The entire Android runtime overhead is exactly **9.6 KB** (`classes.dex`). No bloated WebView frameworks.
-- **New Configuration System (`nitron.config.json`)**: Configure Nitron using a pure JSON file. Supports splash screen colors, hardware back-button logic, and cleartext traffic control.
-- **Dynamic Icons**: Don't have an app icon? Nitron automatically provides a sleek glowing neutron default icon at all DPI sizes!
-- **Framework Presets**: Added the `--preset` flag to `nitron init` to scaffold configurations for `nextjs`, `vite`, `react`, and `vanilla`.
+A small app builds into a ~214 KB APK in about two seconds, using only Node.js and a Java runtime.
 
 ---
 
-## 🤔 The Problem Nitron Solves
+## The problem
 
-Every tool that turns web apps into Android apps eventually forces you to open Android Studio, install Gradle, configure a JDK, and think like an Android developer.
+Every tool that turns a web app into an Android app eventually makes you open Android Studio, install Gradle, configure a JDK, and think like an Android developer.
 
-- **Capacitor** says "web-first" — then asks you to install Android Studio.  
-- **Cordova** says "cross-platform" — then requires 8GB of RAM for a build.  
-- **PWAs** can't ship on Google Play as real apps.
+- **Capacitor** says "web-first", then asks you to install Android Studio.
+- **Cordova** says "cross-platform", then needs gigabytes of RAM for a build.
+- **PWAs** can't ship to Google Play as real apps.
 
-**Nitron makes Android completely invisible — not just simpler.**
-You write HTML, CSS, and JavaScript. You run an npm command. You get a real `.apk` file in 3 seconds. That's it.
+Nitron keeps Android out of your way. You write HTML, CSS and JavaScript, run one command, and get a real APK or AAB.
 
 ---
 
-## ⚡ Quick Start
-
-You can use Nitron globally or locally in your web project.
-
-### 1. Initialize Nitron
-
-Navigate to your web project (e.g., a Next.js or Vite project) and run:
+## Quick Start
 
 ```bash
-npx nitron init --preset vanilla
-```
+# 1. Create the config in your web project
+npx nitron init --preset vanilla     # or: nextjs | vite | react
 
-This will generate a `nitron.config.json` file in your project root.
-
-### 2. Build your Web App
-
-Compile your framework into static HTML/JS/CSS files (e.g., `out/` for Next.js or `dist/` for Vite):
-
-```bash
+# 2. Build your web app into static files (skip for plain HTML)
 npm run build
+
+# 3. Build the Android app
+npx nitron build                     # → dist/app.apk  (for testing on a device)
 ```
 
-### 3. Generate the APK
+`init` generates a `nitron.config.json` in your project root. Install the APK on any Android device to test it.
 
-Run the Nitron build command targeting your output folder:
-
-```bash
-npx nitron build
-```
-
-**Output:** `dist/app.apk` — a real Android APK, ready to install on any device or upload to Google Play!
+**Requirements:** Node.js 18+ and a Java Runtime (JRE 8+) for signing. No Android SDK, no Android Studio, no Gradle.
 
 ---
 
-## ⚙️ Configuration (`nitron.config.json`)
+## Publishing to Google Play
 
-Nitron is controlled via a simple `nitron.config.json` file. Here is a fully detailed example:
+Google Play requires an Android App Bundle (`.aab`) for new apps, and a release signing key you keep forever.
+
+```bash
+# once: create your release keystore (back it up — you cannot update your app without it)
+npx nitron keystore
+
+# every release
+npx nitron build --target aab --release     # → dist/app.aab
+```
+
+- `--release` signs with `nitron-release.keystore`. For CI, set the password in the `NITRON_KEYSTORE_PASSWORD` environment variable.
+- The default `targetSdk` is **36**, and Nitron warns you when you build an AAB with a lower one. Google raises its minimum every year, so check the current requirement in the Play Console before you upload.
+- Raise `version` in `nitron.config.json` before every upload.
+- Signing an AAB needs a full **JDK** (8+), not just a JRE.
+- Set a real `icon` in the config; the default Nitron icon is meant for testing.
+
+Use the `.apk` for testing on devices and the `.aab` for the Play Console.
+
+---
+
+## Configuration
+
+Everything lives in `nitron.config.json`:
 
 ```json
 {
@@ -104,149 +95,152 @@ Nitron is controlled via a simple `nitron.config.json` file. Here is a fully det
   "statusBar": true,
   "permissions": ["INTERNET", "ACCESS_NETWORK_STATE", "CAMERA"],
   "icon": "./public/icon.png",
-  "network": {
-    "cleartext": false
-  },
+  "network": { "cleartext": false },
   "webview": {
     "backButton": "history",
-    "clearCacheOnStart": false
+    "clearCacheOnStart": false,
+    "externalLinks": "browser",
+    "allowedHosts": []
   },
-  "splashScreen": {
-    "backgroundColor": "#FFFFFF"
-  }
+  "splashScreen": { "backgroundColor": "#FFFFFF" }
 }
 ```
 
-### Configuration Options
+| Option | Description |
+| --- | --- |
+| `name`, `packageId`, `version` | App name, unique Android package ID, and version. |
+| `entry` | Path to your compiled entry file (e.g. `out/index.html`). Nitron packages the whole directory it sits in. |
+| `orientation` | `portrait`, `landscape` or `auto`. |
+| `permissions` | Android permissions. 70+ are recognized (API 21–34+); `INTERNET` is always included. |
+| `icon` | A `.png` or `.jpg`. Nitron generates adaptive icons for all densities. If omitted, the default Nitron icon is used. |
+| `android.targetSdk`, `android.minSdk` | Override the SDK levels (defaults: target 36, min 21). |
+| `webview.backButton` | `"history"` makes the hardware back button navigate browser history; `"exit"` closes the app. |
+| `webview.externalLinks` | `"browser"` (default) opens links to other websites in the system browser. `"inapp"` loads them inside the WebView (see [Security model](#security-model)). |
+| `webview.allowedHosts` | Hostnames (for example `"pay.example.com"`) that may load inside the WebView even when `externalLinks` is `"browser"`. Use for payment or sign-in pages. |
+| `network.cleartext` | `true` allows plain HTTP. Default `false` (HTTPS only). |
+| `exclude` | Files or folders to keep out of the app (see below). |
 
-- **`entry`**: The path to your compiled entry file (e.g., `out/index.html`). Nitron will smartly inject the *contents* of the `out` directory, keeping paths clean.
-- **`permissions`**: Nitron v2.0 recognizes over 70+ Android permissions (API 21-34). `INTERNET` is automatically included.
-- **`icon`**: Path to a `.png` or `.jpg`. Nitron will automatically generate adaptive Android mipmap icons (MDPI to XXXHDPI). If omitted, a default Nitron icon is used.
-- **`webview.backButton`**: Set to `"history"` to make the Android hardware back-button trigger browser back navigation.
-- **`network.cleartext`**: Set to `true` to allow HTTP traffic. Default is `false` (HTTPS only).
+### Excluding files
 
-### 🗑️ Asset Exclusion (New in v3.1.0)
-
-If you have files in your web project that shouldn't be packaged into your final app bundle (like `*.exe` tools, backend configurations, or secret files), you can exclude them using the `exclude` array. Nitron will completely ignore these files during the build, keeping your app ultra-lightweight.
+Keep tools, backend folders or secrets out of the final bundle:
 
 ```json
 {
   "exclude": ["*.exe", "my-backend-folder", "secret.config"]
 }
 ```
-Glob patterns like `*.exe` and exact file or folder names are fully supported!
+
+Glob patterns like `*.exe` and exact file or folder names are supported.
 
 ---
 
-<a name="web-first-runtime"></a>
+## Native APIs
 
-## 🌐 Framework Compatibility & Best Practices
+Nitron exposes a small bridge to your JavaScript as `window.Nitron`:
 
-Nitron seamlessly bundles the output of any web framework. Because v2.0 uses a proper HTTPS-like local origin, modern features work out of the box.
+```js
+window.Nitron.requestLocationPermission()
+window.Nitron.requestCameraPermission()
+window.Nitron.requestStoragePermission()
+window.Nitron.showNotification('Title', 'Message')
+```
 
-### Next.js (Static Export)
+These work in the standard build, with no extra tools installed. Add the matching Android permission to `permissions` in your config. On Android 13+ notifications also need the `POST_NOTIFICATIONS` permission.
 
-Nitron fully supports Next.js **Static Exports**. Set `output: "export"` in your `next.config.js`.
+---
 
-> [!WARNING]
-> **Next.js Dynamic Routes Warning:**
-> Next.js `output: "export"` strictly prohibits dynamic routes (like `/products/[id]/page.tsx`) unless you provide a `generateStaticParams` function.
-> **The Nitron Best Practice:** Convert your dynamic routes to use **Query Parameters** (e.g., `/products/detail/page.tsx`) and read the ID using `useSearchParams()`. Wrap the component in a React `<Suspense>` boundary to allow flawless client-side rendering within the APK!
+## Security model
+
+Nitron serves your files from `https://appassets.androidplatform.net` inside the app, and attaches the `window.Nitron` bridge to that WebView. To keep the bridge away from third-party pages:
+
+- **External links open in the system browser by default.** Set `webview.externalLinks` to `"inapp"` only if you really need other websites inside the WebView, and prefer listing specific hosts in `webview.allowedHosts`.
+- **Bridge calls are checked against the app origin.** `showNotification` and the permission requests do nothing unless the current page comes from the app's own origin.
+- **WebView permission and geolocation prompts are granted only to the app origin.** The check compares the exact host, so look-alike hosts such as `appassets.androidplatform.net.example.com` are rejected.
+- **Cross-origin iframes:** Android exposes a JavaScript bridge to every frame of the page. Do not embed untrusted iframes in an app that relies on sensitive bridge calls.
+
+---
+
+## Framework Compatibility
+
+Nitron packages the static output of whatever you use to build your site. Point `entry` at the built `index.html`.
+
+- **Vite / React / Vue / Svelte:** work with their normal static build. Absolute paths such as `/assets/script.js` resolve correctly, so you don't need `base: './'`.
+- **Next.js:** supported through static export (`output: "export"` in `next.config.js`).
+
+> **Next.js dynamic routes:** `output: "export"` rejects routes like `/products/[id]/page.tsx` unless you provide `generateStaticParams`. For apps, use a query parameter instead (`/products/detail?id=...`), read it with `useSearchParams()`, and wrap the component in `<Suspense>`.
 
 | Feature | Status | Notes |
 | --- | --- | --- |
-| Static pages | ✅ | Works perfectly |
-| Client Components | ✅ | Works perfectly (Wrap `useSearchParams` in `<Suspense>`) |
-| `fetch()` to external APIs | ✅ | Works perfectly. **Make sure your backend CORS allows `https://appassets.androidplatform.net`!** |
-| Dynamic routes (`/[id]`) | ⚠️ | Must use Query Parameters (`?id=...`) instead. |
-| Server Actions / API Routes | ❌ | No Node.js server at runtime. |
-
-### Vite / React / Vue / Svelte
-
-- **100% compatible.**
-- You no longer need to worry about `base: './'` configs! Absolute paths from the root (`/assets/script.js`) resolve correctly because of the HTTPS local origin.
+| Static pages | ✅ | |
+| Client components | ✅ | Wrap `useSearchParams` in `<Suspense>`. |
+| `fetch()` to external HTTPS APIs | ✅ | Your backend must allow the origin `https://appassets.androidplatform.net` in its CORS settings. |
+| Dynamic routes (`/[id]`) | ⚠️ | Use query parameters instead. |
+| Server Actions / API routes | ❌ | There is no Node.js server at runtime. |
 
 ---
 
-<a name="under-the-hood"></a>
+## How it works
 
-## 🧠 Under the Hood
+**Local origin.** Nitron does not load your files over `file://`. Its `shouldInterceptRequest` handler serves them from the APK's `assets/www/` as `https://appassets.androidplatform.net/...`. The WebView behaves as if it were browsing a real HTTPS site: absolute paths, cookies, `localStorage` and `fetch()` work as in a browser. The Android runtime itself is a ~14 KB `classes.dex`.
 
-How does Nitron v2.0 achieve blazing fast builds without Gradle or Android Studio?
+**Build pipeline.** `nitron build` skips Gradle entirely:
 
-### 1. The Web-First Runtime
+1. Read and validate `nitron.config.json`.
+2. Unpack a pre-compiled `base.apk` template.
+3. Inject your web assets into `assets/www/`.
+4. Compile icon, resources and manifest with a small auto-downloaded `aapt2`.
+5. Repack, sign, verify.
 
-Instead of using the vulnerable `setAllowUniversalAccessFromFileURLs()`, Nitron ships with a custom `shouldInterceptRequest` implementation written in pure Java.
-When the Android `WebView` requests `https://appassets.androidplatform.net/css/style.css`, Nitron intercepts this request and reads the file directly from the APK's `assets/www/css/style.css` in memory. This tricks the WebView into thinking it's browsing a secure remote server, enabling all modern web features. It even has fallback logic to detect `.html` extensions and handle Single Page Application (SPA) routing!
-
-### 2. The Build Pipeline
-
-When you run `nitron build`:
-
-1. **No Gradle**: Gradle is too slow and heavy. We bypass it entirely.
-2. **Pre-compiled Template**: Nitron uses a highly optimized `base.apk` template.
-3. **Asset Injection**: We unzip the template, inject your HTML/JS assets into `assets/www/`, and dynamically modify the `AndroidManifest.xml`.
-4. **On-the-fly Compilation**: Nitron automatically downloads a tiny, portable version of `aapt2` to compile your app's icon and resources instantly.
-5. **Re-packaging**: The modified files are zipped back together and cryptographically signed with a debug keystore using Node.js.
-
-The result? An APK built in under **3 seconds** using standard Node.js scripts.
+**Android compatibility:** API 21 (Android 5.0) and up, targeting API 36 by default, tested up to Android 16. Feature availability on old versions depends on the device's WebView.
 
 ---
 
-## 📱 Android Compatibility
+## iOS
 
-| Android | Status |
+The same config builds iOS apps through a separate engine (`initron`) that wraps your app in a WKWebView shell.
+
+```bash
+npx nitron build --target ios-simulator   # unsigned .app for the iOS Simulator
+npx nitron build --target ios             # signed .ipa for a real device
+```
+
+| Target | What you need |
 | --- | --- |
-| Android 5.0 (API 21) | Supported* |
-| Android 9 (API 28) | Supported |
-| Android 13 (API 33) | Supported |
-| Android 14 (API 34) | Supported |
-| Android 16 (API 36) | Tested & Ready |
+| `ios` (device / TestFlight / App Store) | A one-time shell build on **Linux or WSL2** (no Mac, no Xcode), plus an Apple Developer certificate for a real signature (`NITRON_IOS_P12_PATH`, `NITRON_IOS_P12_PASSWORD`, `NITRON_IOS_PROVISION_PATH`). |
+| `ios-simulator` | A one-time **macOS** step, because the iPhoneSimulator SDK isn't available from the same Linux-friendly source as the device SDK. No Apple Developer account needed. |
 
-*\*Feature availability may vary by Android/WebView version.*
+Run `scripts/build-ios-toolchain.sh` and `scripts/build-shell-device.sh` once (or trigger `.github/workflows/build-shell-device.yml`, which runs on a plain Linux runner). The full walkthrough and every design decision are in [ARCHITECTURE.md](ARCHITECTURE.md). Minimum deployment target: iOS 13.
 
 ---
 
-## 🍎 iOS Compatibility
+## Limitations
 
-| iOS | Status |
-| --- | --- |
-| iOS 13+ | Supported (shell minimum deployment target) |
-
-**Setup required before your first iOS build:** see [`ARCHITECTURE.md`](ARCHITECTURE.md) for the full walkthrough — in short: `scripts/build-ios-toolchain.sh` + `scripts/build-shell-device.sh` (or the equivalent GitHub Actions workflow) build the real-device shell entirely on Linux. No Mac needed for that path, ever. The Simulator target is the one remaining piece that still needs a one-time macOS step.
-
-| Target | Needs |
-| --- | --- |
-| `--target ios` (real device / TestFlight / App Store) | Nothing beyond a one-time Linux toolchain build. Apple Developer account + certificate only for a real (non-ad-hoc) signature. |
-| `--target ios-simulator` | A one-time macOS step (iPhoneSimulator SDK isn't available from the same Linux-friendly source as the device SDK). |
+- **No custom native code yet.** You cannot add your own Java/Kotlin code. Native plugins are planned.
+- **No automatic route fallback.** A request for a path that is not a file in your build (for example `/about` after a reload or deep link) is not rewritten to `index.html` or `about.html`. Use hash routing, or make sure every route exists as a file.
+- **No server at runtime.** Server Actions and API routes don't exist in an app; call a hosted backend instead.
+- **Automated tests are not in the repository yet.** Releases are checked by building and installing real apps.
 
 ---
 
-## 🛠️ Requirements
+## Contributing
 
-- **Node.js** 18 or later
-- **npm** (comes with Node.js)
-- **Java Runtime Environment (JRE)** 8+ (for building standard `.apk` files)
-- **Java Development Kit (JDK)** 8+ (ONLY if you want to build advanced `.aab` files for Google Play)
+Contributions and test reports are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
-That's it for day-to-day `nitron build`. Building an APK requires zero Android SDK, zero Android Studio, and zero Gradle. Building an IPA requires zero Xcode and zero macOS.
+To modify the Java template you need a full **JDK**:
 
-**One-time only**, to build the iOS shell yourself (§6 of [`ARCHITECTURE.md`](ARCHITECTURE.md)) on Linux or WSL2: `clang`, `llvm`, `lld`, `cmake`, `automake`, `autogen`, `libtool`, `libssl-dev`, `libxml2-dev`, `uuid-dev`, `pkg-config`, `git`, `xz-utils`, `zip`/`unzip`. `scripts/build-ios-toolchain.sh` installs all of these for you via `apt-get` — you don't need to install them by hand.
+1. Edit the code in `template-src/base/`.
+2. Run `node scripts/prepare-template.js` to compile it into `template/base.apk`. The script finds or downloads `android.jar` and the R8 dexer for you (JDK 11+ is required for R8).
 
----
-
-## 🏗️ Contributing & Nitron Development Environment
-
-If you want to contribute to Nitron or modify its core Java template (e.g., adding more Native APIs or customizing the Push Notifications logic), you must set up the full Nitron Development Environment:
-
-1. Install a full **Java Development Kit (JDK)** 17 or later.
-2. Modify the Java code in `template-src/`.
-3. Run `node scripts/prepare-template.js` to compile your custom `MainActivity.java` and package it into the `template/base.apk`.
-
-*(Note: Regular users just building web apps into APKs do **not** need to do this. They receive the template pre-compiled with Push Notifications support out-of-the-box!)*
+Regular users never need this; they get the template pre-compiled.
 
 ---
 
-## 📝 License
+## Changelog
 
-[MIT](LICENSE) © [ALightbolt4G](https://github.com/ALightbolt4G)
+See [CHANGELOG.md](CHANGELOG.md).
+
+---
+
+## License
+
+Nitron is licensed under **GPL-2.0 with the Nitron Output Exception**. The exception is what lets you build and ship your own apps with Nitron, including proprietary ones. See [LICENSE](LICENSE) for the full terms.
