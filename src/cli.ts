@@ -6,19 +6,35 @@
 //   nitron dev     — Start local preview server (Phase 3)
 
 import { Command } from 'commander'
-import { resolve } from 'node:path'
+import { resolve, dirname, join } from 'node:path'
+import { readFileSync } from 'node:fs'
+import { fileURLToPath } from 'node:url'
 import { readConfig } from './config.js'
 import { validateConfig, validateProject } from './validator.js'
 import { build } from './engines/nitronoid/build.js'
 import { build as buildIOS } from './engines/initron/build.js'
 import { logger } from './logger.js'
 
+/** Read the real package version so `nitron --version` never drifts from package.json. */
+function readPackageVersion(): string {
+  try {
+    const here = dirname(fileURLToPath(import.meta.url))
+    for (const rel of ['..', '../..']) {
+      try {
+        const pkg = JSON.parse(readFileSync(join(here, rel, 'package.json'), 'utf-8'))
+        if (pkg.name === 'nitron' && pkg.version) return pkg.version
+      } catch { /* try next */ }
+    }
+  } catch { /* fall through */ }
+  return '0.0.0'
+}
+
 const program = new Command()
 
 program
   .name('nitron')
   .description('Convert HTML/CSS/JS into Android and iOS apps — zero platform knowledge required')
-  .version('3.1.0')
+  .version(readPackageVersion())
 
 // ─── BUILD COMMAND ───────────────────────────────────────────────
 program

@@ -31,6 +31,8 @@ const DEFAULTS: Omit<NitronConfig, 'name' | 'packageId'> = {
   webview: {
     clearCacheOnStart: false,
     backButton: 'history',
+    externalLinks: 'browser',
+    allowedHosts: [],
   },
 }
 
@@ -55,6 +57,8 @@ function mergeWithDefaults(partial: Record<string, any>): NitronConfig {
     webview: {
       clearCacheOnStart: partial.webview?.clearCacheOnStart ?? DEFAULTS.webview!.clearCacheOnStart,
       backButton: partial.webview?.backButton ?? DEFAULTS.webview!.backButton,
+      externalLinks: partial.webview?.externalLinks ?? DEFAULTS.webview!.externalLinks,
+      allowedHosts: partial.webview?.allowedHosts ?? DEFAULTS.webview!.allowedHosts,
     },
     android: partial.android,
     minSdkVersion: partial.minSdkVersion,

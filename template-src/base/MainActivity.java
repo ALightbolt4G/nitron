@@ -55,6 +55,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.webkit.JavascriptInterface;
+import android.content.ActivityNotFoundException;
 
 public class MainActivity extends Activity {
 
@@ -71,6 +72,16 @@ public class MainActivity extends Activity {
     // Runtime config read from AndroidManifest <meta-data>
     private String backButtonMode = "history";
     private boolean clearCacheOnStart = false;
+
+    // External navigation policy (nitron.externalLinks / nitron.allowedHosts):
+    //   "browser" (default) — http(s) links to other hosts open in the system browser
+    //   "inapp"             — they load inside the WebView (legacy hybrid behavior)
+    private String externalLinksMode = "browser";
+    private final java.util.Set<String> allowedHosts = new java.util.HashSet<String>();
+
+    // Last main-frame URL, updated on the UI thread. JavaScript-interface calls
+    // arrive on a background thread, so they read this instead of WebView.getUrl().
+    private volatile String currentPageUrl = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -153,7 +164,7 @@ public class MainActivity extends Activity {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        if (request.getOrigin() != null && request.getOrigin().toString().startsWith("https://" + ASSET_HOST)) {
+                        if (request.getOrigin() != null && isAppOrigin(request.getOrigin().toString())) {
                             request.grant(request.getResources());
                         } else {
                             request.deny();
@@ -164,7 +175,7 @@ public class MainActivity extends Activity {
 
             @Override
             public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
-                if (origin != null && origin.startsWith("https://" + ASSET_HOST)) {
+                if (origin != null && isAppOrigin(origin)) {
                     callback.invoke(origin, true, false);
                 } else {
                     callback.invoke(origin, false, false);
@@ -230,10 +241,19 @@ public class MainActivity extends Activity {
                 return false;
             }
 
-            // For external URLs (http/https to other domains),
-            // also load inside WebView to support hybrid apps
             String scheme = uri.getScheme();
             if ("http".equals(scheme) || "https".equals(scheme)) {
+                // Legacy hybrid mode, or a host the developer explicitly allowed.
+                String host = uri.getHost() == null ? "" : uri.getHost().toLowerCase();
+                if ("inapp".equals(externalLinksMode) || allowedHosts.contains(host)) {
+                    return false;
+                }
+                // Default: external pages never load inside the WebView that
+                // carries the Nitron bridge. Hand them to the system browser.
+                if (request.isForMainFrame()) {
+                    openInSystemBrowser(uri);
+                    return true;
+                }
                 return false;
             }
 
@@ -242,11 +262,57 @@ public class MainActivity extends Activity {
         }
 
         @Override
+        public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
+            super.onPageStarted(view, url, favicon);
+            currentPageUrl = url;
+        }
+
+        @Override
+        public void doUpdateVisitedHistory(WebView view, String url, boolean isReload) {
+            super.doUpdateVisitedHistory(view, url, isReload);
+            currentPageUrl = url;
+        }
+
+        @Override
         public void onPageFinished(WebView view, String url) {
             super.onPageFinished(view, url);
+            currentPageUrl = url;
             // Hide splash screen when first page finishes loading
             hideSplash();
         }
+    }
+
+    /**
+     * Open a URL in the system browser instead of inside the bridge-enabled WebView.
+     */
+    private void openInSystemBrowser(Uri uri) {
+        try {
+            Intent intent = new Intent(Intent.ACTION_VIEW, uri);
+            intent.addCategory(Intent.CATEGORY_BROWSABLE);
+            startActivity(intent);
+        } catch (ActivityNotFoundException e) {
+            // No browser available — ignore.
+        }
+    }
+
+    /**
+     * True when the page currently shown comes from the app's own origin.
+     * Safe to call from any thread (reads a volatile updated on the UI thread).
+     */
+    private boolean isAppOriginNow() {
+        return isAppOrigin(currentPageUrl);
+    }
+
+    /**
+     * Exact origin match: https scheme, the asset host, default port.
+     * A prefix check would also accept "appassets.androidplatform.net.evil.com".
+     */
+    private static boolean isAppOrigin(String url) {
+        if (url == null) return false;
+        Uri u = Uri.parse(url);
+        return "https".equals(u.getScheme())
+            && ASSET_HOST.equals(u.getHost())
+            && u.getPort() == -1;
     }
 
     /**
@@ -262,6 +328,14 @@ public class MainActivity extends Activity {
             if (meta != null) {
                 backButtonMode = meta.getString("nitron.backButton", "history");
                 clearCacheOnStart = meta.getBoolean("nitron.clearCacheOnStart", false);
+                externalLinksMode = meta.getString("nitron.externalLinks", "browser");
+                String hosts = meta.getString("nitron.allowedHosts", "");
+                if (hosts != null && !hosts.isEmpty()) {
+                    for (String h : hosts.split(",")) {
+                        String host = h.trim().toLowerCase();
+                        if (!host.isEmpty()) allowedHosts.add(host);
+                    }
+                }
             }
         } catch (PackageManager.NameNotFoundException e) {
             // Use defaults
@@ -422,6 +496,8 @@ public class MainActivity extends Activity {
     private class NitronJSInterface {
         @JavascriptInterface
         public void showNotification(String title, String message) {
+            // Only the app's own pages may raise notifications.
+            if (!isAppOriginNow()) return;
             NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
             String channelId = "nitron_default_channel";
 
@@ -463,8 +539,7 @@ public class MainActivity extends Activity {
         }
 
         private boolean isSafeOrigin() {
-            String url = webView.getUrl();
-            return url != null && url.startsWith("https://" + ASSET_HOST);
+            return isAppOrigin(webView.getUrl());
         }
 
         @JavascriptInterface

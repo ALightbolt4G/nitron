@@ -52,6 +52,16 @@ const KNOWN_PERMISSIONS = new Set([
   'SYSTEM_ALERT_WINDOW', 'NFC', 'FLASHLIGHT', 'SET_ALARM',
 ])
 
+/** Escape a value for use inside a double-quoted XML attribute. */
+function xmlEscape(value: string): string {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;')
+}
+
 /**
  * Generate a standard AndroidManifest.xml string from the NitronConfig.
  *
@@ -90,8 +100,19 @@ export function generateManifestXml(config: NitronConfig): string {
   metaDataEntries.push(`            <meta-data android:name="nitron.clearCacheOnStart" android:value="${clearCache}" />`)
 
   // Splash screen background color
-  const splashBg = config.splashScreen?.backgroundColor ?? '#FFFFFF'
+  const splashBg = xmlEscape(config.splashScreen?.backgroundColor ?? '#FFFFFF')
   metaDataEntries.push(`            <meta-data android:name="nitron.splashBackground" android:value="${splashBg}" />`)
+
+  // External link policy (default: open other websites in the system browser)
+  const externalLinks = config.webview?.externalLinks === 'inapp' ? 'inapp' : 'browser'
+  metaDataEntries.push(`            <meta-data android:name="nitron.externalLinks" android:value="${externalLinks}" />`)
+
+  const allowedHosts = (config.webview?.allowedHosts ?? [])
+    .map(h => String(h).trim().toLowerCase())
+    .filter(h => /^[a-z0-9.-]+$/.test(h))
+  if (allowedHosts.length > 0) {
+    metaDataEntries.push(`            <meta-data android:name="nitron.allowedHosts" android:value="${xmlEscape(allowedHosts.join(','))}" />`)
+  }
 
   const metaDataXml = metaDataEntries.join('\n')
 
@@ -102,14 +123,14 @@ export function generateManifestXml(config: NitronConfig): string {
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="${config.packageId}"
     android:versionCode="${versionCode}"
-    android:versionName="${config.version}">
+    android:versionName="${xmlEscape(config.version)}">
 
     <uses-sdk android:minSdkVersion="${minSdk}" android:targetSdkVersion="${targetSdk}" />
     
 ${permissionsXml}
 
     <application
-        android:label="${config.name}"
+        android:label="${xmlEscape(config.name)}"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
         android:hardwareAccelerated="true"

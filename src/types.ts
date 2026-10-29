@@ -55,6 +55,18 @@ export interface NitronConfig {
     clearCacheOnStart?: boolean
     /** Back button behavior: 'history' navigates back, 'exit' closes app (default: 'history') */
     backButton?: 'history' | 'exit'
+    /**
+     * What happens when the page links to another website (http/https):
+     *  - 'browser' (default): open it in the system browser, keeping the
+     *    Nitron bridge away from third-party pages.
+     *  - 'inapp': load it inside the WebView (legacy hybrid behavior).
+     */
+    externalLinks?: 'browser' | 'inapp'
+    /**
+     * Hostnames (e.g. "pay.example.com") that may load inside the WebView even
+     * when externalLinks is 'browser'. Use for payment or login pages.
+     */
+    allowedHosts?: string[]
   }
 
   /**
@@ -81,6 +93,8 @@ export interface NitronConfig {
    */
   targetSdkVersion?: number
   targetSdk?: number
+  minSdkVersion?: number
+  minSdk?: number
 
   /**
    * Android-specific overrides.

@@ -167,6 +167,23 @@ export function validateConfig(config: NitronConfig): ValidationResult {
     )
   }
 
+  if (config.webview?.externalLinks && !['browser', 'inapp'].includes(config.webview.externalLinks)) {
+    warnings.push(
+      `Invalid webview.externalLinks: "${config.webview.externalLinks}" — must be "browser" or "inapp", defaulting to "browser"`
+    )
+  }
+  if (config.webview?.externalLinks === 'inapp') {
+    warnings.push(
+      'webview.externalLinks is "inapp": other websites will load inside the WebView, next to the Nitron bridge. ' +
+      'Prefer "browser" and list trusted hosts in webview.allowedHosts.'
+    )
+  }
+  for (const host of config.webview?.allowedHosts ?? []) {
+    if (!/^[a-zA-Z0-9.-]+$/.test(String(host))) {
+      warnings.push(`webview.allowedHosts: "${host}" is not a plain hostname and will be ignored`)
+    }
+  }
+
   return { valid: errors.length === 0, errors, warnings }
 }
 
