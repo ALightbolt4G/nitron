@@ -11,22 +11,34 @@ nitron-test-app/
 real apk app for test/
 test-extract/
 test-icon/
+test-backend/
 
 # OS files
 .DS_Store
 Thumbs.db
 
-# IDE
+# IDE & Editors
 .idea/
 .vscode/
 *.swp
 *.swo
-test-backend/
 
-# Local build artifacts
+# Local build artifacts and caches
 local-jdk/
 template-build/
+.template-build/
+.nitron/
 *.tgz
+*.zip
+*.tar.gz
+*.patch
+APPLY.md
+
+# Keystores & Signing credentials (security)
+*.keystore
+*.jks
+*.p12
+*.mobileprovision
 
 # iOS build artifacts
 .toolchain-build/
@@ -35,3 +47,8 @@ toolchain/
 .shell-build/
 .shell-build-sim/
 
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

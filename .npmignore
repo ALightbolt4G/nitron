@@ -3,19 +3,41 @@ src/
 tsconfig.json
 tsup.config.ts
 
-# Development & Test files
+# Development, tests, and documentation
 test-backend/
 test-app/
 tests/
+docs/
+ARCHITECTURE.md
+CONTRIBUTING.md
+APPLY.md
+
+# Template source and build scripts
 .template-build/
+template-build/
 template-src/
 scripts/
 
-# Git and CI
+# Large assets not needed at runtime (loaded from GitHub raw URL in README)
+assets/nitron-demo.gif
+
+# Git, CI and IDE configs
 .github/
 .git/
 .gitignore
+.idea/
+.vscode/
 
-# Misc
+# Signing keys and certificates
+*.keystore
+*.jks
+*.p12
+*.mobileprovision
+
+# Archives and patches
+*.zip
+*.patch
+*.tgz
+
+# Logs
 *.log
-docs/
