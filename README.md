@@ -2,7 +2,7 @@
   <img src="https://raw.githubusercontent.com/ALightbolt4G/nitron/main/assets/default-icon.png" width="120" height="120" alt="Nitron logo">
 </p>
 
-<h1 align="center">⚡ Nitron v3.1.5</h1>
+<h1 align="center">⚡ Nitron v3.2.0</h1>
 
 <p align="center">
   <strong>Turn HTML/CSS/JS into real Android &amp; iOS apps — no Android Studio, no Gradle, no Xcode.</strong>
