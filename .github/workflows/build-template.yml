@@ -1,0 +1,47 @@
+# Rebuilds template/base.apk and template/nitron-plugin-api.jar from template-src/
+# on a GitHub runner (which already has the Android SDK and a JDK), runs the checks,
+# and commits the result. Start it by hand: Actions -> Build template -> Run workflow.
+name: Build template
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  template:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - run: npm ci
+      - name: Build the template
+        run: node scripts/prepare-template.js
+      - run: npm test
+      - run: npm run build
+      - name: Plugin runtime tests
+        run: npm run test:plugins
+      - uses: actions/upload-artifact@v4
+        with:
+          name: template
+          path: |
+            template/base.apk
+            template/nitron-plugin-api.jar
+      - name: Commit the rebuilt template
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add template/base.apk template/nitron-plugin-api.jar
+          if git diff --cached --quiet; then
+            echo "Template unchanged"
+          else
+            git commit -m "chore: rebuild template"
+            git push
+          fi

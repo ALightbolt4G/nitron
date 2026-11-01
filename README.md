@@ -13,6 +13,7 @@
   <a href="#publishing-to-google-play">Google Play</a> •
   <a href="#configuration">Configuration</a> •
   <a href="#native-apis">Native APIs</a> •
+  <a href="#native-plugins">Plugins</a> •
   <a href="#security-model">Security</a> •
   <a href="#framework-compatibility">Frameworks</a> •
   <a href="#how-it-works">How it works</a> •
@@ -117,6 +118,8 @@ Everything lives in `nitron.config.json`:
 | `webview.backButton` | `"history"` makes the hardware back button navigate browser history; `"exit"` closes the app. |
 | `webview.externalLinks` | `"browser"` (default) opens links to other websites in the system browser. `"inapp"` loads them inside the WebView (see [Security model](#security-model)). |
 | `webview.allowedHosts` | Hostnames (for example `"pay.example.com"`) that may load inside the WebView even when `externalLinks` is `"browser"`. Use for payment or sign-in pages. |
+| `plugins` | Java files or folders to compile into the app as [native plugins](#native-plugins). |
+| `onPluginError` | `"error"` (default) stops the build when a plugin fails; `"warn"` builds the app without that plugin. |
 | `network.cleartext` | `true` allows plain HTTP. Default `false` (HTTPS only). |
 | `exclude` | Files or folders to keep out of the app (see below). |
 
@@ -149,12 +152,41 @@ These work in the standard build, with no extra tools installed. Add the matchin
 
 ---
 
+## Native plugins
+
+Need an Android feature that `window.Nitron` doesn't cover, such as Bluetooth or usage stats? Write it in Java. Nitron compiles it into the app and your JavaScript calls it as an async function.
+
+```java
+public class BatteryPlugin extends NitronPlugin {
+    @NitronMethod
+    public void getStatus(PluginCall call) throws Exception {
+        // ... read the battery ...
+        call.resolve(new JSONObject().put("level", level));
+    }
+}
+```
+
+```json
+{ "plugins": ["./plugins/BatteryPlugin.java"] }
+```
+
+```js
+const { level } = await Nitron.plugins.Battery.getStatus()
+Nitron.on('Bluetooth:found', device => console.log(device))   // events from Java
+```
+
+- Needs a full **JDK** on your machine. Standard builds without plugins still need only a JRE.
+- If a plugin has an error, the build stops and shows it. Set `"onPluginError": "warn"` to build the app without that plugin instead.
+- Examples (battery, Bluetooth) are in [`examples/plugins/`](examples/plugins). The full guide is [docs/PLUGINS.md](docs/PLUGINS.md).
+
+---
+
 ## Security model
 
 Nitron serves your files from `https://appassets.androidplatform.net` inside the app, and attaches the `window.Nitron` bridge to that WebView. To keep the bridge away from third-party pages:
 
 - **External links open in the system browser by default.** Set `webview.externalLinks` to `"inapp"` only if you really need other websites inside the WebView, and prefer listing specific hosts in `webview.allowedHosts`.
-- **Bridge calls are checked against the app origin.** `showNotification` and the permission requests do nothing unless the current page comes from the app's own origin.
+- **Bridge calls are checked against the app origin.** `showNotification`, the permission requests and every plugin call do nothing unless the current page comes from the app's own origin.
 - **WebView permission and geolocation prompts are granted only to the app origin.** The check compares the exact host, so look-alike hosts such as `appassets.androidplatform.net.example.com` are rejected.
 - **Cross-origin iframes:** Android exposes a JavaScript bridge to every frame of the page. Do not embed untrusted iframes in an app that relies on sensitive bridge calls.
 
@@ -215,10 +247,10 @@ Run `scripts/build-ios-toolchain.sh` and `scripts/build-shell-device.sh` once (o
 
 ## Limitations
 
-- **No custom native code yet.** You cannot add your own Java/Kotlin code. Native plugins are planned.
+- **Plugins are Java only,** for Android, and cannot use extra libraries (`.jar`/`.aar`) yet.
 - **No automatic route fallback.** A request for a path that is not a file in your build (for example `/about` after a reload or deep link) is not rewritten to `index.html` or `about.html`. Use hash routing, or make sure every route exists as a file.
 - **No server at runtime.** Server Actions and API routes don't exist in an app; call a hosted backend instead.
-- **Automated tests are not in the repository yet.** Releases are checked by building and installing real apps.
+- **Tests cover the plugin runtime only** (`npm run test:plugins`). The rest is checked by building and installing real apps.
 
 ---
 
@@ -229,7 +261,8 @@ Contributions and test reports are welcome. See [CONTRIBUTING.md](CONTRIBUTING.m
 To modify the Java template you need a full **JDK**:
 
 1. Edit the code in `template-src/base/`.
-2. Run `node scripts/prepare-template.js` to compile it into `template/base.apk`. The script finds or downloads `android.jar` and the R8 dexer for you (JDK 11+ is required for R8).
+2. Run `node scripts/prepare-template.js` to compile it into `template/base.apk` and `template/nitron-plugin-api.jar`. The script finds or downloads `android.jar` and the R8 dexer for you (JDK 11+ is required for R8).
+3. Run `npm run test:plugins` to check the plugin runtime (no device needed).
 
 Regular users never need this; they get the template pre-compiled.
 

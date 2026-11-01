@@ -13,7 +13,7 @@
 // Excluded: app.js, nitron.config.json, package.json, node_modules/, dist/, .git/
 
 import { readdir, copyFile, mkdir, readFile, writeFile, access } from 'node:fs/promises'
-import { join, dirname, basename, relative } from 'node:path'
+import { join, dirname, basename, relative, resolve, isAbsolute } from 'node:path'
 import type { NitronConfig } from '../../types.js'
 
 /** Files and directories to exclude from injection */
@@ -78,6 +78,14 @@ export async function injectAssets(config: NitronConfig, projectDir: string, ass
     regexStr = regexStr.replace(/\*/g, '.*').replace(/\?/g, '.')
     return new RegExp(`^${regexStr}$`)
   })
+
+  // Plugin sources are build inputs, not web assets: never package them
+  for (const entry of config.plugins ?? []) {
+    const rel = relative(sourceDir, resolve(projectDir, entry)).replace(/\\/g, '/')
+    if (rel && !rel.startsWith('..') && !isAbsolute(rel)) {
+      excludeRegexes.push(new RegExp(`^${rel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`))
+    }
+  }
 
   // Ensure the target assets/www/ directory exists
   await mkdir(assetsDir, { recursive: true })

@@ -12,6 +12,7 @@ real apk app for test/
 test-extract/
 test-icon/
 test-backend/
+examples/plugin-test/
 
 # OS files
 .DS_Store

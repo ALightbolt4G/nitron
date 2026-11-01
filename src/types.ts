@@ -28,6 +28,21 @@ export interface NitronConfig {
   exclude?: string[]
 
   /**
+   * Native Android plugins written in Java (Android build only).
+   * Each entry is a .java file or a directory of .java files, relative to the
+   * project root. Each entry is compiled as one unit and must contain a class
+   * that extends com.nicron.webview.NitronPlugin. Needs a full JDK.
+   */
+  plugins?: string[]
+
+  /**
+   * What to do when a plugin cannot be built:
+   *  - 'error' (default): stop the build and show the problem.
+   *  - 'warn': build the app without that plugin and print a warning.
+   */
+  onPluginError?: 'error' | 'warn'
+
+  /**
    * Network configuration.
    * By default, only HTTPS traffic is allowed.
    */

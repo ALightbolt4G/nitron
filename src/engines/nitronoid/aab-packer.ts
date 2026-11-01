@@ -19,7 +19,7 @@ export async function packAab(buildDir: string, outputPath: string): Promise<voi
 
   // AAB Structure:
   // /manifest/AndroidManifest.xml
-  // /dex/classes.dex
+  // /dex/classes.dex (+ classes2.dex, ... for plugins)
   // /res/...
   // /resources.pb
   // /assets/...
@@ -33,12 +33,13 @@ export async function packAab(buildDir: string, outputPath: string): Promise<voi
     throw new Error('AndroidManifest.xml not found in build directory. Make sure aapt2 proto link succeeded.');
   }
 
-  // 2. Add dex
-  try {
-    const dexData = await readFile(join(buildDir, 'classes.dex'));
-    zip.file('dex/classes.dex', dexData);
-  } catch (err) {
+  // 2. Add dex (classes.dex, plus classes2.dex ... when the app has plugins)
+  const dexNames = (await readdir(buildDir)).filter(f => /^classes\d*\.dex$/.test(f));
+  if (!dexNames.includes('classes.dex')) {
     throw new Error('classes.dex not found in build directory.');
+  }
+  for (const dexName of dexNames) {
+    zip.file(`dex/${dexName}`, await readFile(join(buildDir, dexName)));
   }
 
   // 3. Add resources.pb

@@ -167,6 +167,18 @@ export function validateConfig(config: NitronConfig): ValidationResult {
     )
   }
 
+  // ─── Plugins ──────────────────────────────────────
+  if (config.plugins !== undefined) {
+    if (!Array.isArray(config.plugins) || config.plugins.some(p => typeof p !== 'string' || p.trim() === '')) {
+      errors.push('"plugins" must be an array of file or directory paths (strings)')
+    } else if (config.plugins.length > 32) {
+      errors.push(`"plugins" lists ${config.plugins.length} entries; a unit can hold several plugins but an app supports at most 32 plugins`)
+    }
+  }
+  if (config.onPluginError !== undefined && !['error', 'warn'].includes(config.onPluginError as string)) {
+    errors.push(`Invalid onPluginError: "${config.onPluginError}" — must be "error" or "warn"`)
+  }
+
   if (config.webview?.externalLinks && !['browser', 'inapp'].includes(config.webview.externalLinks)) {
     warnings.push(
       `Invalid webview.externalLinks: "${config.webview.externalLinks}" — must be "browser" or "inapp", defaulting to "browser"`

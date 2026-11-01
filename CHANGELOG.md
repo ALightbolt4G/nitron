@@ -1,5 +1,20 @@
 # Changelog
 
+## v3.2.0
+
+### Added
+- **Native plugins (Android).** Write Java classes that extend `NitronPlugin`, list them in `plugins` in `nitron.config.json`, and call them from JavaScript as promises (`Nitron.plugins.Battery.getStatus()`). Plugins can send events (`Nitron.on('Bluetooth:found', ...)`), request permissions and react to the app lifecycle.
+- `onPluginError`: `"error"` (default) stops the build when a plugin fails; `"warn"` leaves that plugin out and builds the app. Problems are reported with file and line (compile errors), or as a clear message (no plugin class, missing public constructor, duplicate name, minSdk below 21, outdated template).
+- Examples in `examples/plugins/` (battery, Bluetooth) and a guide in `docs/PLUGINS.md`.
+- `npm run test:plugins`: JVM tests for the plugin runtime and Node tests for the generated JavaScript (no device needed).
+- AAB builds include every `classes*.dex`.
+
+### Notes
+- Plugins need a full JDK. R8 (the dex converter) is downloaded once, with a SHA-1 check, or taken from the Android SDK, `NITRON_D8` or `NITRON_R8_JAR`.
+- The template must be rebuilt (`node scripts/prepare-template.js`); it now also produces `template/nitron-plugin-api.jar`.
+- Apps with plugins get `window.Nitron` replaced by a plain object (the built-in methods are forwarded, so existing code keeps working). Apps without plugins are unchanged.
+- Plugin sources that sit inside the web folder are never packaged as web assets.
+
 ## v3.1.5
 
 ### Security

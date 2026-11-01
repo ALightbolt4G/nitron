@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>⚡ Nitron v3.1.5 — Turn Web Apps into Real Android & iOS Apps</title>
-    <meta name="description" content="Convert HTML/CSS/JS into real Android APK/AAB and iOS IPA apps in seconds — zero Android Studio, zero Gradle, zero Xcode. Full technical docs and reference.">
+    <title>⚡ Nitron v3.2.0 — Turn Web Apps into Real Android & iOS Apps</title>
+    <meta name="description" content="Convert HTML/CSS/JS into real Android APK/AAB and iOS IPA apps in seconds. Build native Android plugins in Java — zero Android Studio, zero Gradle, zero Xcode.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@500;700;800;900&display=swap" rel="stylesheet">
@@ -864,13 +864,14 @@
         <div class="container nav-content">
             <a href="#" class="brand">
                 <span>⚡ Nitron</span>
-                <span class="brand-badge">v3.1.5</span>
+                <span class="brand-badge">v3.2.0</span>
             </a>
 
             <ul class="nav-links">
                 <li><a href="#quick-start">Quick Start</a></li>
                 <li><a href="#config">Config</a></li>
                 <li><a href="#native-apis">Native APIs</a></li>
+                <li><a href="#plugins">Plugins</a></li>
                 <li><a href="#security">Security</a></li>
                 <li><a href="#publishing">Google Play</a></li>
                 <li><a href="#ios">iOS Engine</a></li>
@@ -893,7 +894,7 @@
         <div class="container">
             <div class="badge-pill">
                 <span class="badge-dot"></span>
-                <span>Nitron v3.1.5 Released — Production Security Fixes & Google Play AAB</span>
+                <span>Nitron v3.2.0 Released — Native Android Plugins</span>
             </div>
 
             <h1>Turn HTML/CSS/JS into <br><span class="text-gradient">Real Android &amp; iOS Apps</span></h1>
@@ -905,7 +906,7 @@
             <div class="hero-actions">
                 <a href="#quick-start" class="btn btn-primary">⚡ Quick Start in 60s</a>
                 <a href="#architecture" class="btn btn-secondary">📐 Architecture Reference</a>
-                <a href="#changelog" class="btn btn-secondary">📜 What's New in v3.1.5</a>
+                <a href="#plugins" class="btn btn-secondary">Native Plugins</a>
             </div>
 
             <!-- Stats -->
@@ -965,7 +966,7 @@
                         <thead>
                             <tr>
                                 <th>Capability / Requirement</th>
-                                <th class="highlight">⚡ Nitron v3.1.5</th>
+                                <th class="highlight">⚡ Nitron v3.2.0</th>
                                 <th>Capacitor</th>
                                 <th>Cordova</th>
                                 <th>PWA</th>
@@ -1128,6 +1129,8 @@
   <span class="term-info">"permissions"</span>: [<span class="term-success">"INTERNET"</span>, <span class="term-success">"ACCESS_NETWORK_STATE"</span>, <span class="term-success">"CAMERA"</span>],
   <span class="term-info">"icon"</span>: <span class="term-success">"./public/icon.png"</span>,
   <span class="term-info">"exclude"</span>: [<span class="term-success">"*.exe"</span>, <span class="term-success">"my-backend-folder"</span>, <span class="term-success">"secret.config"</span>],
+  <span class="term-info">"plugins"</span>: [<span class="term-success">"./plugins/BatteryPlugin.java"</span>],
+  <span class="term-info">"onPluginError"</span>: <span class="term-success">"error"</span>,
   <span class="term-info">"network"</span>: { <span class="term-info">"cleartext"</span>: <span class="term-cyan">false</span> },
   <span class="term-info">"webview"</span>: {
     <span class="term-info">"backButton"</span>: <span class="term-success">"history"</span>,
@@ -1161,6 +1164,14 @@
                 <div class="config-item">
                     <div><span class="config-key">exclude</span><span class="config-type">string[]</span></div>
                     <div class="config-desc">Glob patterns or exact folder names kept out of the final APK/IPA bundle to reduce bundle size.</div>
+                </div>
+                <div class="config-item">
+                    <div><span class="config-key">plugins</span><span class="config-type">string[]</span></div>
+                    <div class="config-desc">Java files or folders compiled into the Android app and exposed through <code>Nitron.plugins</code>.</div>
+                </div>
+                <div class="config-item">
+                    <div><span class="config-key">onPluginError</span><span class="config-type">'error' | 'warn'</span></div>
+                    <div class="config-desc">Stops the build by default when a plugin fails; use <code>"warn"</code> to omit a failing plugin.</div>
                 </div>
                 <div class="config-item">
                     <div><span class="config-key">android.targetSdk</span><span class="config-type">number</span></div>
@@ -1207,6 +1218,57 @@ window.Nitron.requestStoragePermission();</pre>
                     </div>
                 </div>
             </div>
+        </div>
+    </section>
+
+    <!-- Native Plugins -->
+    <section id="plugins">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">New in v3.2.0</span>
+                <h2>Native Android Plugins</h2>
+                <p>When the built-in bridge is not enough, write a small Java class and call Android APIs from your web app as promises.</p>
+            </div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <div class="card-icon">Plugin</div>
+                    <h3>Java to Promise API</h3>
+                    <p>Extend <code>NitronPlugin</code>, mark a public method with <code>@NitronMethod</code>, then call it from JavaScript. Plugin calls run away from the UI thread and resolve or reject normally.</p>
+                    <div class="code-container">
+                        <button class="copy-button" onclick="copySnippet(this)">Copy</button>
+<pre><span class="term-dim">// JavaScript</span>
+<span class="term-info">const</span> { level, charging } = <span class="term-info">await</span>
+  Nitron.plugins.Battery.getStatus();</pre>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-icon">Events</div>
+                    <h3>Events, Permissions &amp; Lifecycle</h3>
+                    <p>Plugins can emit events, request Android permissions, and react to app lifecycle callbacks. Nitron checks plugin code during the build and keeps calls restricted to the app origin.</p>
+                    <div class="code-container">
+                        <button class="copy-button" onclick="copySnippet(this)">Copy</button>
+<pre><span class="term-dim">// Subscribe to an event emitted by Java</span>
+Nitron.on(<span class="term-success">'Bluetooth:found'</span>, device =&gt; {
+  console.log(device.name);
+});</pre>
+                    </div>
+                </div>
+            </div>
+
+            <div class="code-container" style="margin-top: 2rem;">
+                <button class="copy-button" onclick="copySnippet(this)">Copy Setup</button>
+<pre><span class="term-dim">// nitron.config.json</span>
+{
+  <span class="term-info">"plugins"</span>: [<span class="term-success">"./plugins/BatteryPlugin.java"</span>],
+  <span class="term-info">"onPluginError"</span>: <span class="term-success">"error"</span>
+}
+
+<span class="term-dim"># Build the Android app (requires a full JDK)</span>
+<span class="term-prompt">npx</span> nitron build</pre>
+            </div>
+            <p class="text-muted" style="margin-top: 1rem;">Plugins are Android-only, support Java source files or folders, and currently allow up to 32 plugins per app. See <a href="https://github.com/ALightbolt4G/nitron/blob/main/docs/PLUGINS.md" target="_blank">the full Plugins guide</a> and the <a href="https://github.com/ALightbolt4G/nitron/tree/main/examples/plugins" target="_blank">ready-made examples</a>.</p>
         </div>
     </section>
 
@@ -1366,9 +1428,21 @@ window.Nitron.requestStoragePermission();</pre>
             </div>
 
             <div class="changelog-timeline">
+                <!-- v3.2.0 -->
+                <div class="changelog-entry">
+                    <span class="changelog-badge">v3.2.0 (Latest)</span>
+                    <h3 style="margin-bottom: 8px;">Native Android Plugins</h3>
+                    <ul class="changelog-list">
+                        <li><strong>Native Plugins:</strong> Compile Java classes into Android apps and call their <code>@NitronMethod</code> methods with <code>Nitron.plugins</code>.</li>
+                        <li><strong>Events &amp; Lifecycle:</strong> Plugins can emit web events, request permissions, and react to app lifecycle callbacks.</li>
+                        <li><strong>Build Validation:</strong> Plugin source is checked for class, constructor, method, duplicate-name, permission, and SDK errors.</li>
+                        <li><strong>Plugin Runtime Tests:</strong> Run <code>npm run test:plugins</code> to validate the Java dispatcher and generated JavaScript bridge without a device.</li>
+                    </ul>
+                </div>
+
                 <!-- v3.1.5 -->
                 <div class="changelog-entry">
-                    <span class="changelog-badge">v3.1.5 (Latest)</span>
+                    <span class="changelog-badge">v3.1.5</span>
                     <h3 style="margin-bottom: 8px;">Security Hardening &amp; Toolchain Improvements</h3>
                     <ul class="changelog-list">
                         <li><strong>External Links Default to System Browser:</strong> <code>webview.externalLinks</code> defaults to <code>"browser"</code>, preventing third-party websites from loading inside the bridge WebView.</li>
@@ -1438,7 +1512,7 @@ window.Nitron.requestStoragePermission();</pre>
                 <div class="footer-brand">
                     <div class="brand">
                         <span>⚡ Nitron</span>
-                        <span class="brand-badge">v3.1.5</span>
+                        <span class="brand-badge">v3.2.0</span>
                     </div>
                     <p>Convert HTML, CSS, and JavaScript into native Android &amp; iOS apps with zero platform SDK knowledge.</p>
                 </div>
@@ -1449,6 +1523,7 @@ window.Nitron.requestStoragePermission();</pre>
                         <li><a href="#quick-start">Quick Start</a></li>
                         <li><a href="#config">Configuration</a></li>
                         <li><a href="#native-apis">Native APIs</a></li>
+                        <li><a href="#plugins">Native Plugins</a></li>
                         <li><a href="#publishing">Google Play</a></li>
                         <li><a href="#ios">iOS Engine</a></li>
                     </ul>
@@ -1496,7 +1571,7 @@ window.Nitron.requestStoragePermission();</pre>
         const terminalDemos = {
             apk: [
                 { text: "$ npx nitron build", cls: "term-prompt" },
-                { text: "⚡ Nitron v3.1.5", cls: "term-info" },
+                { text: "⚡ Nitron v3.2.0", cls: "term-info" },
                 { text: "Step 1/2: Reading configuration...", cls: "term-dim" },
                 { text: "✓ Configuration loaded from nitron.config.json", cls: "term-success" },
                 { text: "Step 2/2: Validating project...", cls: "term-dim" },
@@ -1510,7 +1585,7 @@ window.Nitron.requestStoragePermission();</pre>
             ],
             aab: [
                 { text: "$ npx nitron build --target aab --release", cls: "term-prompt" },
-                { text: "⚡ Nitron v3.1.5 — Release Mode", cls: "term-info" },
+                { text: "⚡ Nitron v3.2.0 — Release Mode", cls: "term-info" },
                 { text: "✓ Keystore loaded: nitron-release.keystore", cls: "term-success" },
                 { text: "ℹ Target SDK: 36 (Compliant with Google Play Console 2026 requirements)", cls: "term-info" },
                 { text: "✓ Compiling resources with aapt2...", cls: "term-dim" },
@@ -1521,7 +1596,7 @@ window.Nitron.requestStoragePermission();</pre>
             ],
             ios: [
                 { text: "$ npx nitron build --target ios", cls: "term-prompt" },
-                { text: "⚡ Nitron v3.1.5 — initron engine", cls: "term-info" },
+                { text: "⚡ Nitron v3.2.0 — initron engine", cls: "term-info" },
                 { text: "✓ Unpacking pre-compiled Mach-O arm64 WKWebView shell...", cls: "term-dim" },
                 { text: "✓ Injecting web assets into Payload/App.app/www/...", cls: "term-dim" },
                 { text: "✓ Generated Info.plist with permission usage strings", cls: "term-dim" },
@@ -1530,7 +1605,7 @@ window.Nitron.requestStoragePermission();</pre>
             ],
             pwa: [
                 { text: "$ npx nitron build --target pwa", cls: "term-prompt" },
-                { text: "⚡ Nitron v3.1.5 — PWA Generator", cls: "term-info" },
+                { text: "⚡ Nitron v3.2.0 — PWA Generator", cls: "term-info" },
                 { text: "✓ Generating manifest.webmanifest from nitron.config.json...", cls: "term-dim" },
                 { text: "✓ Injecting service-worker.js with offline cache strategy...", cls: "term-dim" },
                 { text: "✓ Generating multi-density PWA icons...", cls: "term-dim" },

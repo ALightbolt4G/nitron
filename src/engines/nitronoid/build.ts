@@ -19,6 +19,7 @@ import { logger } from '../../logger.js'
 import type { NitronConfig, BuildOptions, BuildResult } from '../../types.js'
 import { writeFile } from 'node:fs/promises'
 import { buildResources } from './aapt2-resource-builder.js'
+import { buildPlugins } from './plugins.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = dirname(__filename)
@@ -88,7 +89,29 @@ export async function build(config: NitronConfig, options: BuildOptions): Promis
       logger.info(`Android resources successfully compiled and linked.`)
     }
 
-    // ─── Step 4: Pack ───────────────────────────────────
+    // ─── Step 4: Native plugins (optional) ──────────────────
+    if (config.plugins && config.plugins.length > 0) {
+      logger.step(4, BUILD_STEPS, 'Compiling plugins...')
+      const minSdk = (config as any).minSdkVersion ?? config.android?.minSdk ?? (config as any).minSdk ?? config.android?.minSdkVersion ?? 21
+      const pluginResult = await buildPlugins({
+        config,
+        projectDir: options.projectDir,
+        buildDir,
+        templatePath,
+        minSdk,
+        debug: options.debug,
+      })
+      if (pluginResult) {
+        if (pluginResult.plugins.length > 0) {
+          logger.success(`Plugins: ${pluginResult.plugins.map(p => p.name).join(', ')}`)
+        }
+        for (const s of pluginResult.skipped) {
+          warnings.push(`Plugin ${s.source} was skipped: ${s.reason}`)
+        }
+      }
+    }
+
+    // ─── Step 5: Pack ───────────────────────────────────
     logger.step(5, BUILD_STEPS, isAab ? 'Packing AAB...' : 'Packing APK...')
     const unsignedPath = join(options.outputDir, isAab ? 'unsigned.aab' : 'unsigned.apk')
     
@@ -133,7 +156,9 @@ export async function build(config: NitronConfig, options: BuildOptions): Promis
         return size
       }
       assetsSize = await dirSize(join(buildDir as string, 'assets'))
-      dexSize = (await stat(join(buildDir as string, 'classes.dex'))).size
+      for (const f of await readdir(buildDir as string)) {
+        if (/^classes\d*\.dex$/.test(f)) dexSize += (await stat(join(buildDir as string, f))).size
+      }
     } catch { }
 
     const otherSize = apkStat.size - assetsSize - dexSize
@@ -154,7 +179,7 @@ export async function build(config: NitronConfig, options: BuildOptions): Promis
 
     console.log(`\n📦 APK size: ${formatSize(apkStat.size)}`)
     console.log(`   └─ assets/      ${formatSize(assetsSize)}`)
-    console.log(`   └─ classes.dex  ${formatSize(dexSize)}`)
+    console.log(`   └─ dex          ${formatSize(dexSize)}`)
     console.log(`   └─ other        ${formatSize(Math.max(0, otherSize))}\n`)
 
     if (options.release) {

@@ -44,8 +44,17 @@ import android.widget.ImageView;
 import android.view.Gravity;
 import android.view.animation.AlphaAnimation;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import java.util.HashMap;
 import java.util.Map;
 import android.app.Notification;
@@ -78,6 +87,18 @@ public class MainActivity extends Activity {
     //   "inapp"             — they load inside the WebView (legacy hybrid behavior)
     private String externalLinksMode = "browser";
     private final java.util.Set<String> allowedHosts = new java.util.HashSet<String>();
+
+    // Native plugins (see NitronPlugin). Null when the app has no plugins.
+    private PluginDispatcher pluginDispatcher = null;
+    private final List<NitronPlugin> loadedPlugins = new ArrayList<NitronPlugin>();
+    private static final String PLUGINS_REGISTRY = "nitron-plugins.json";
+    private static final String RUNTIME_PATH = "__nitron/runtime.js";
+    private static final String RUNTIME_TAG = "<script src=\"/" + RUNTIME_PATH + "\"></script>";
+    private static final Pattern HEAD_TAG = Pattern.compile("<head[^>]*>", Pattern.CASE_INSENSITIVE);
+    private static final Pattern HTML_TAG = Pattern.compile("<html[^>]*>", Pattern.CASE_INSENSITIVE);
+    private static final Pattern DOCTYPE_TAG = Pattern.compile("<!doctype[^>]*>", Pattern.CASE_INSENSITIVE);
+    /** Request codes 0x2000-0x3FFF belong to plugins: 0x2000 | (pluginIndex << 8) | code. */
+    private static final int PLUGIN_REQUEST_BASE = 0x2000;
 
     // Last main-frame URL, updated on the UI thread. JavaScript-interface calls
     // arrive on a background thread, so they read this instead of WebView.getUrl().
@@ -113,6 +134,9 @@ public class MainActivity extends Activity {
         if (clearCacheOnStart) {
             webView.clearCache(true);
         }
+
+        // Native plugins must be registered before the first page starts
+        loadPlugins();
 
         // Load the entry point via HTTPS-like origin
         webView.loadUrl("https://" + ASSET_HOST + "/index.html");
@@ -213,6 +237,12 @@ public class MainActivity extends Activity {
                     path = path.substring(1);
                 }
 
+                // Plugin runtime script (generated, not an asset)
+                if (pluginDispatcher != null && RUNTIME_PATH.equals(path)) {
+                    byte[] js = buildRuntimeJs().getBytes(java.nio.charset.Charset.forName("UTF-8"));
+                    return new WebResourceResponse("application/javascript", "UTF-8", new ByteArrayInputStream(js));
+                }
+
                 // Map to assets/www/ directory
                 String assetPath = ASSET_PREFIX + path;
 
@@ -220,6 +250,11 @@ public class MainActivity extends Activity {
                     InputStream inputStream = getAssets().open(assetPath);
                     String mimeType = resolveMimeType(path);
                     String encoding = isTextMimeType(mimeType) ? "UTF-8" : null;
+
+                    // Apps with plugins get the runtime script as the first script of every page
+                    if (pluginDispatcher != null && "text/html".equals(mimeType)) {
+                        inputStream = injectRuntimeTag(inputStream);
+                    }
 
                     return new WebResourceResponse(mimeType, encoding, inputStream);
                 } catch (IOException e) {
@@ -408,11 +443,233 @@ public class MainActivity extends Activity {
     }
 
     @Override
+    protected void onPause() {
+        for (NitronPlugin p : loadedPlugins) {
+            try { p.onPause(); } catch (Throwable t) { System.err.println("Nitron: plugin onPause failed: " + t); }
+        }
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        for (NitronPlugin p : loadedPlugins) {
+            try { p.onResume(); } catch (Throwable t) { System.err.println("Nitron: plugin onResume failed: " + t); }
+        }
+    }
+
+    @Override
     protected void onDestroy() {
+        for (NitronPlugin p : loadedPlugins) {
+            try { p.onDestroy(); } catch (Throwable t) { System.err.println("Nitron: plugin onDestroy failed: " + t); }
+        }
+        if (pluginDispatcher != null) {
+            pluginDispatcher.shutdown();
+        }
         if (webView != null) {
             webView.destroy();
         }
         super.onDestroy();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if ((requestCode & 0xE000) == PLUGIN_REQUEST_BASE) {
+            int index = (requestCode >> 8) & 0x1F;
+            int code = requestCode & 0xFF;
+            if (index < loadedPlugins.size()) {
+                try {
+                    loadedPlugins.get(index).onRequestPermissionsResult(code, permissions, grantResults);
+                } catch (Throwable t) {
+                    System.err.println("Nitron: plugin permission callback failed: " + t);
+                }
+            }
+            return;
+        }
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+    }
+
+    // ─── Native plugins ────────────────────────────────────────────────
+
+    /** What plugins may ask of the app. */
+    private final PluginHost pluginHost = new PluginHost() {
+        @Override
+        public Activity activity() {
+            return MainActivity.this;
+        }
+
+        @Override
+        public void emit(String pluginName, String event, String dataJson) {
+            runScriptInPage("window.__nitronEmit&&window.__nitronEmit("
+                    + jsString(pluginName + ":" + event) + "," + jsString(dataJson) + ")");
+        }
+
+        @Override
+        public void requestPermissions(final NitronPlugin plugin, final String[] permissions, final int requestCode) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    final int index = loadedPlugins.indexOf(plugin);
+                    if (index < 0) return;
+                    if (Build.VERSION.SDK_INT >= 23) {
+                        MainActivity.this.requestPermissions(permissions, PLUGIN_REQUEST_BASE | (index << 8) | requestCode);
+                    } else {
+                        // Before Android 6 permissions are granted at install time
+                        int[] granted = new int[permissions.length];
+                        plugin.onRequestPermissionsResult(requestCode, permissions, granted);
+                    }
+                }
+            });
+        }
+
+        @Override
+        public void runOnUi(Runnable runnable) {
+            runOnUiThread(runnable);
+        }
+    };
+
+    /** The only object plugins are reachable through. Calls from other origins are ignored. */
+    private class PluginBridge {
+        @JavascriptInterface
+        public void invoke(String plugin, String method, String argsJson, String callId) {
+            if (pluginDispatcher == null || !isAppOriginNow()) return;
+            pluginDispatcher.dispatch(plugin, method, argsJson, callId);
+        }
+    }
+
+    /**
+     * Load the plugins listed in assets/nitron-plugins.json (written at build time).
+     * A plugin that fails to load is skipped; it never stops the app from starting.
+     */
+    private void loadPlugins() {
+        String json = readAssetText(PLUGINS_REGISTRY);
+        if (json == null) return;
+
+        try {
+            JSONArray entries = new JSONObject(json).optJSONArray("plugins");
+            if (entries == null || entries.length() == 0) return;
+
+            PluginDispatcher dispatcher = new PluginDispatcher(new PluginDispatcher.Sink() {
+                @Override
+                public void deliver(String callId, boolean ok, String payloadJson) {
+                    runScriptInPage("window.__nitronResolve&&window.__nitronResolve("
+                            + jsString(callId) + "," + ok + "," + jsString(payloadJson) + ")");
+                }
+            });
+
+            for (int i = 0; i < entries.length(); i++) {
+                JSONObject entry = entries.optJSONObject(i);
+                if (entry == null) continue;
+                String name = entry.optString("name", "");
+                String className = entry.optString("class", "");
+                try {
+                    Class<?> cls = Class.forName(className);
+                    if (!NitronPlugin.class.isAssignableFrom(cls)) {
+                        throw new IllegalArgumentException(className + " does not extend NitronPlugin");
+                    }
+                    NitronPlugin plugin = (NitronPlugin) cls.getConstructor().newInstance();
+                    plugin.attach(pluginHost, name);
+                    dispatcher.register(name, plugin);
+                    loadedPlugins.add(plugin);
+                } catch (Throwable t) {
+                    System.err.println("Nitron: plugin " + name + " (" + className + ") was not loaded: " + t);
+                }
+            }
+
+            if (loadedPlugins.isEmpty()) {
+                dispatcher.shutdown();
+                return;
+            }
+            pluginDispatcher = dispatcher;
+            webView.addJavascriptInterface(new PluginBridge(), "__NitronPlugins");
+
+            for (NitronPlugin plugin : new ArrayList<NitronPlugin>(loadedPlugins)) {
+                try {
+                    plugin.onLoad();
+                } catch (Throwable t) {
+                    System.err.println("Nitron: plugin onLoad failed: " + t);
+                }
+            }
+        } catch (Throwable t) {
+            System.err.println("Nitron: could not read " + PLUGINS_REGISTRY + ": " + t);
+        }
+    }
+
+    private String readAssetText(String name) {
+        InputStream in = null;
+        try {
+            in = getAssets().open(name);
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            byte[] buf = new byte[4096];
+            int n;
+            while ((n = in.read(buf)) != -1) out.write(buf, 0, n);
+            return new String(out.toByteArray(), "UTF-8");
+        } catch (IOException e) {
+            return null;
+        } finally {
+            if (in != null) {
+                try { in.close(); } catch (IOException ignored) { }
+            }
+        }
+    }
+
+    /** Run JavaScript in the page, but only while the page is the app's own page. */
+    private void runScriptInPage(final String script) {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (webView != null && isAppOriginNow()) {
+                    webView.evaluateJavascript(script, null);
+                }
+            }
+        });
+    }
+
+    /** A JavaScript string literal for any text (safe against quotes, newlines and U+2028/9). */
+    private static String jsString(String value) {
+        return JSONObject.quote(value == null ? "" : value)
+                .replace("\u2028", "\\u2028")
+                .replace("\u2029", "\\u2029");
+    }
+
+    /** Insert the runtime script tag at the top of the document head. */
+    private InputStream injectRuntimeTag(InputStream original) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        try {
+            byte[] buf = new byte[8192];
+            int n;
+            while ((n = original.read(buf)) != -1) out.write(buf, 0, n);
+        } finally {
+            original.close();
+        }
+        String html = new String(out.toByteArray(), "UTF-8");
+
+        int at = 0;
+        Matcher m = HEAD_TAG.matcher(html);
+        if (m.find()) {
+            at = m.end();
+        } else if ((m = HTML_TAG.matcher(html)).find()) {
+            at = m.end();
+        } else if ((m = DOCTYPE_TAG.matcher(html)).find()) {
+            at = m.end();
+        }
+        String result = html.substring(0, at) + RUNTIME_TAG + html.substring(at);
+        return new ByteArrayInputStream(result.getBytes("UTF-8"));
+    }
+
+    /** The runtime script for this app's plugins (see PluginRuntimeScript). */
+    private String buildRuntimeJs() {
+        List<String> nativeMethods = new ArrayList<String>();
+        for (Method m : NitronJSInterface.class.getDeclaredMethods()) {
+            if (m.isAnnotationPresent(JavascriptInterface.class)) {
+                nativeMethods.add(m.getName());
+            }
+        }
+        java.util.Map<String, List<String>> plugins = new java.util.LinkedHashMap<String, List<String>>();
+        for (String name : pluginDispatcher.pluginNames()) {
+            plugins.put(name, pluginDispatcher.methodNames(name));
+        }
+        return PluginRuntimeScript.build(nativeMethods, plugins);
     }
 
     // ─── MIME Type Resolution ──────────────────────────────────────────

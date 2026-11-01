@@ -84,6 +84,10 @@ export async function build(
   let buildDir: string | null = null
   const isSimulator = options.target === 'ios-simulator' || options.simulator
 
+  if (config.plugins && config.plugins.length > 0) {
+    warnings.push('"plugins" are Android-only (Java). They are ignored in iOS builds.')
+  }
+
   try {
     // ─── Step 1: Locate shell template ──────────────────────
     logger.step(1, BUILD_STEPS, 'Locating shell template...')

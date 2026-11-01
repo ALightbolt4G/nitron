@@ -1,6 +1,6 @@
 {
   "name": "nitron",
-  "version": "3.1.5",
+  "version": "3.2.0",
   "description": "HTML/CSS/JS to Android & iOS app builder",
   "repository": {
     "type": "git",
@@ -40,6 +40,7 @@
     "dev": "tsup --watch",
     "test": "tsc --noEmit",
     "prepare-template": "node scripts/prepare-template.js",
+    "test:plugins": "node scripts/test-plugin-runtime.js",
     "prepublishOnly": "npm run build"
   },
   "keywords": [

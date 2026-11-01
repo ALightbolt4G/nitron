@@ -89,7 +89,7 @@ async function ensureAapt2(): Promise<string> {
   return aapt2Path;
 }
 
-async function ensureAndroidJar(): Promise<string> {
+export async function ensureAndroidJar(): Promise<string> {
   const cacheDir = join(homedir(), '.nitron', 'android');
   await mkdir(cacheDir, { recursive: true });
   
